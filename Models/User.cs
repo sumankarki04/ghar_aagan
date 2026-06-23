@@ -23,8 +23,17 @@ public class User
 
     public UserRole Role { get; set; } = UserRole.Customer;
 
-    // Providers start unverified; an admin verifies them. Shown as a trust badge.
+    // Providers start unverified; verification is now driven by admin KYC approval.
     public bool IsVerified { get; set; }
+
+    // KYC (Know Your Customer) — providers submit documents, admin approves/rejects.
+    public KycStatus KycStatus { get; set; } = KycStatus.NotSubmitted;
+    public DateTime? KycSubmittedAt { get; set; }
+    public DateTime? KycReviewedAt { get; set; }
+    [MaxLength(500)]
+    public string? KycRejectionReason { get; set; }
+
+    public ICollection<KycDocument> KycDocuments { get; set; } = new List<KycDocument>();
 
     // Provider-only profile text. Null for customers/admins.
     [MaxLength(1000)]

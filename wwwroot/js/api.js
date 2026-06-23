@@ -107,11 +107,28 @@ const API = (() => {
         return attempt(method, path, body, signal);
     }
 
+    // Multipart upload (FormData). Browser sets Content-Type + boundary itself.
+    async function upload(path, formData) {
+        const headers = {};
+        const token = getToken();
+        if (token) headers["Authorization"] = "Bearer " + token;
+        const res = await fetch("/api" + path, { method: "POST", headers, body: formData });
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+        if (!res.ok) {
+            const message = (data && data.title) || (typeof data === "string" && data) || `Upload failed (${res.status})`;
+            throw new ApiError(message, res.status, data);
+        }
+        return data;
+    }
+
     return {
         ApiError, getToken, getUser, setSession, clearSession,
         get: (p, opts) => request("GET", p, null, opts),
         post: (p, b, opts) => request("POST", p, b, opts),
         put: (p, b, opts) => request("PUT", p, b, opts),
         del: (p, opts) => request("DELETE", p, null, opts),
+        upload,
     };
 })();

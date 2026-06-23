@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<KycDocument> KycDocuments => Set<KycDocument>();
 
     // Re-stamp concurrency tokens before persisting. For Modified entities EF keeps the
     // loaded value in the WHERE clause, so a competing writer that already changed the row
@@ -47,6 +48,13 @@ public class AppDbContext : DbContext
         // Optimistic-concurrency tokens (SQLite has no native rowversion; see Stamp()).
         b.Entity<Booking>().Property(x => x.RowVersion).IsConcurrencyToken();
         b.Entity<Payment>().Property(x => x.RowVersion).IsConcurrencyToken();
+
+        // KYC documents belong to a provider; removing the user removes their docs.
+        b.Entity<KycDocument>()
+            .HasOne(d => d.Provider)
+            .WithMany(u => u.KycDocuments)
+            .HasForeignKey(d => d.ProviderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // SQLite has no native decimal; store as TEXT with conversion handled by provider.
         b.Entity<ServiceListing>()

@@ -21,3 +21,6 @@ secrets.json
 *.log
 Thumbs.db
 .DS_Store
+
+# KYC uploaded documents (sensitive, never commit)
+kyc-store/

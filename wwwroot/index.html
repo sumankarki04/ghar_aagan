@@ -181,6 +181,25 @@
             </div>
         </section>
 
+        <!-- ===== Provider KYC ===== -->
+        <section id="view-kyc" class="view hidden">
+            <div class="container">
+                <h2 class="page-title">KYC verification</h2>
+                <div id="kycBanner"></div>
+                <form id="kycForm" class="card form">
+                    <p class="desc">Upload at least one document — JPG, PNG, WEBP or PDF, max 5 MB each. Resubmitting replaces previous files.</p>
+                    <label>National ID <input type="file" name="NationalId" accept="image/*,application/pdf" /></label>
+                    <label>Passport <input type="file" name="Passport" accept="image/*,application/pdf" /></label>
+                    <label>Driving license <input type="file" name="DrivingLicense" accept="image/*,application/pdf" /></label>
+                    <label>Selfie <input type="file" name="Selfie" accept="image/*" /></label>
+                    <label>Address proof <input type="file" name="AddressProof" accept="image/*,application/pdf" /></label>
+                    <button class="btn" type="submit">Submit for review</button>
+                </form>
+                <h3 class="section-title">Submitted documents</h3>
+                <div id="kycDocs" class="kyc-docs"></div>
+            </div>
+        </section>
+
         <!-- ===== Admin dashboard ===== -->
         <section id="view-admin" class="view hidden">
             <div class="container">
@@ -211,6 +230,19 @@
             </button>
             <h2 id="detailTitle"></h2>
             <div id="detailBody" class="list"></div>
+        </div>
+    </div>
+
+    <!-- Admin KYC review modal -->
+    <div id="kycModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="KYC review">
+        <div class="modal-card wide">
+            <button class="modal-close" data-kyc-close aria-label="Close">
+                <svg class="icon"><use href="#i-x"/></svg>
+            </button>
+            <h2 id="kycModalTitle"></h2>
+            <p id="kycModalMeta" class="desc"></p>
+            <div id="kycModalDocs" class="kyc-docs"></div>
+            <div id="kycModalActions" class="kyc-actions"></div>
         </div>
     </div>
 

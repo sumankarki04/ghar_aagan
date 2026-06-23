@@ -87,6 +87,7 @@ const VIEWS = {
     mybookings:  { label: "My bookings",     roles: ["Customer"] },
     mylistings:  { label: "My listings",     roles: ["Provider"] },
     jobs:        { label: "Job requests",    roles: ["Provider"] },
+    kyc:         { label: "KYC",             roles: ["Provider"] },
     admin:       { label: "Dashboard",       roles: ["Admin"] },
 };
 
@@ -114,6 +115,7 @@ function showView(key) {
     if (key === "mybookings") loadMyBookings();
     if (key === "mylistings") loadMyListings();
     if (key === "jobs") loadJobs();
+    if (key === "kyc") loadKyc();
     if (key === "admin") loadAdmin();
 }
 
@@ -354,6 +356,87 @@ async function jobAction(id, action) {
     catch (e) { toast(e.message, "error"); }
 }
 
+// ---------- provider KYC ----------
+const KYC_LABEL = { NotSubmitted: "Not submitted", Pending: "Pending review", Approved: "Approved", Rejected: "Rejected" };
+
+async function loadKyc() {
+    let k;
+    try { k = await API.get("/kyc/me"); } catch (e) { return toast(e.message, "error"); }
+    const cls = { NotSubmitted: "info", Pending: "pending", Approved: "approved", Rejected: "rejected" }[k.status] || "info";
+    const text = k.status === "Approved" ? "KYC Verified ✓"
+        : k.status === "Pending" ? "Your KYC is under review (usually 1–2 business days)."
+        : k.status === "Rejected" ? `KYC Rejected: ${esc(k.rejectionReason || "no reason given")}. Please resubmit below.`
+        : "Submit your documents below to get verified.";
+    paint(el("kycBanner"), `<div class="banner ${cls}">${text}</div>`);
+    await renderKycDocs(el("kycDocs"), k.documents);
+}
+
+async function renderKycDocs(container, docs) {
+    if (!docs.length) { paint(container, `<p class="empty">No documents submitted.</p>`); return; }
+    paint(container, docs.map(d => `
+        <div class="kyc-doc" data-docurl="${esc(d.url)}" data-type="${esc(d.docType)}">
+            <div class="kyc-thumb">Loading…</div>
+            <div class="kyc-cap">${esc(d.docType)}${d.fileName ? ` · ${esc(d.fileName)}` : ""}</div>
+        </div>`).join(""));
+    container.querySelectorAll(".kyc-doc").forEach(loadDocThumb);
+}
+
+// Documents need an auth header, so <img src> can't load them directly — fetch as blob.
+async function loadDocThumb(node) {
+    const thumb = node.querySelector(".kyc-thumb");
+    try {
+        const res = await fetch(node.dataset.docurl, { headers: { Authorization: "Bearer " + API.getToken() } });
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        const obj = URL.createObjectURL(blob);
+        thumb.replaceChildren();
+        if (blob.type === "application/pdf") {
+            const a = document.createElement("a");
+            a.href = obj; a.target = "_blank"; a.rel = "noopener"; a.className = "pdf-link"; a.textContent = "View PDF";
+            thumb.appendChild(a);
+        } else {
+            const img = document.createElement("img");
+            img.src = obj; img.alt = node.dataset.type; img.onclick = () => window.open(obj, "_blank");
+            thumb.appendChild(img);
+        }
+    } catch { thumb.textContent = "Failed to load"; }
+}
+
+// ---------- admin KYC review ----------
+async function openKycReview(providerId) {
+    let k;
+    try { k = await API.get(`/admin/kyc/${providerId}`); } catch (e) { return toast(e.message, "error"); }
+    el("kycModalTitle").textContent = `${k.providerName} — KYC ${KYC_LABEL[k.status] || k.status}`;
+    el("kycModalMeta").textContent = `${k.email}${k.submittedAt ? " · submitted " + fmtDate(k.submittedAt) : ""}`
+        + (k.rejectionReason ? ` · last reason: ${k.rejectionReason}` : "");
+    await renderKycDocs(el("kycModalDocs"), k.documents);
+    const actions = el("kycModalActions");
+    if (k.status === "Pending") {
+        paint(actions, `<button class="btn success" id="kycApprove">Approve &amp; verify</button>
+                        <button class="btn danger" id="kycReject">Reject</button>`);
+        el("kycApprove").onclick = () => kycDecision(providerId, "approve");
+        el("kycReject").onclick = () => kycDecision(providerId, "reject");
+    } else {
+        paint(actions, `<p class="desc">No action available — KYC is ${esc(KYC_LABEL[k.status] || k.status)}.</p>`);
+    }
+    el("kycModal").classList.remove("hidden");
+}
+
+async function kycDecision(providerId, action) {
+    try {
+        if (action === "reject") {
+            const reason = prompt("Reason for rejection (shown to the provider):");
+            if (!reason) return;
+            await API.post(`/admin/kyc/${providerId}/reject`, { reason });
+        } else {
+            await API.post(`/admin/kyc/${providerId}/approve`, {});
+        }
+        toast(`KYC ${action === "approve" ? "approved" : "rejected"}.`, "success");
+        el("kycModal").classList.add("hidden");
+        loadAdmin();
+    } catch (e) { toast(e.message, "error"); }
+}
+
 // ---------- admin ----------
 async function loadAdmin() {
     const s = await API.get("/admin/dashboard");
@@ -372,13 +455,12 @@ async function loadAdmin() {
             <div class="info">
                 <h3>${esc(p.fullName)} ${p.isVerified ? `<span class="verified">${ico("i-shield")} Verified</span>` : ""}</h3>
                 <p class="desc">${esc(p.email)} · joined ${esc(fmtDate(p.createdAt))}</p>
+                <span class="pill kyc-${esc(p.kycStatus)}">KYC: ${esc(KYC_LABEL[p.kycStatus] || p.kycStatus)}</span>
             </div>
-            <button class="btn ${p.isVerified ? "ghost" : "success"} sm" data-verify="${p.id}" data-action="${p.isVerified ? "unverify" : "verify"}">
-                ${p.isVerified ? "Unverify" : "Verify"}
-            </button>
+            <button class="btn ${p.kycStatus === "Pending" ? "" : "ghost"} sm" data-kyc="${p.id}">Review KYC</button>
         </div>`).join(""));
-    el("adminProviders").querySelectorAll("[data-verify]").forEach(b =>
-        b.onclick = () => toggleVerify(+b.dataset.verify, b.dataset.action));
+    el("adminProviders").querySelectorAll("[data-kyc]").forEach(b =>
+        b.onclick = () => openKycReview(+b.dataset.kyc));
 
     paint(el("adminCategories"), categories.map(c => `
         <div class="card"><div class="info"><h3>${esc(c.name)}</h3><p class="desc">${esc(c.description || "")}</p></div>
@@ -386,14 +468,6 @@ async function loadAdmin() {
 
     el("adminCategories").querySelectorAll("[data-delcat]").forEach(b =>
         b.onclick = () => deleteCategory(+b.dataset.delcat));
-}
-
-async function toggleVerify(id, action) {
-    try {
-        await API.post(`/admin/providers/${id}/${action}`);
-        toast(`Provider ${action === "verify" ? "verified" : "unverified"}.`, "success");
-        loadAdmin();
-    } catch (e) { toast(e.message, "error"); }
 }
 
 // Drill-down: clicking a dashboard stat opens a modal listing the underlying records.
@@ -452,6 +526,23 @@ function wire() {
     const detail = el("detailModal");
     detail.querySelector("[data-detail-close]").onclick = () => detail.classList.add("hidden");
     detail.onclick = (e) => { if (e.target.id === "detailModal") detail.classList.add("hidden"); };
+
+    const km = el("kycModal");
+    km.querySelector("[data-kyc-close]").onclick = () => km.classList.add("hidden");
+    km.onclick = (e) => { if (e.target.id === "kycModal") km.classList.add("hidden"); };
+
+    el("kycForm").onsubmit = (e) => {
+        e.preventDefault();
+        const f = e.target;
+        submitting(f.querySelector("[type=submit]"), "Uploading…", async () => {
+            try {
+                await API.upload("/kyc/submit", new FormData(f));
+                toast("Submitted for review!", "success");
+                f.reset();
+                loadKyc();
+            } catch (err) { toast(err.message, "error"); }
+        });
+    };
 
     el("regRole").onchange = (e) => el("regBio").classList.toggle("hidden", e.target.value !== "1");
 

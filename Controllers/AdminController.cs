@@ -1,4 +1,5 @@
 using GharAagan.Data;
+using GharAagan.Dtos;
 using GharAagan.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +52,7 @@ public class AdminController : ControllerBase
                 u.Phone,
                 Role = u.Role.ToString(),
                 u.IsVerified,
+                KycStatus = u.KycStatus.ToString(),
                 u.CreatedAt
             })
             .ToListAsync();
@@ -105,19 +107,94 @@ public class AdminController : ControllerBase
         }));
     }
 
-    [HttpPost("providers/{id:int}/verify")]
-    public Task<IActionResult> Verify(int id) => SetVerified(id, true);
-
-    [HttpPost("providers/{id:int}/unverify")]
-    public Task<IActionResult> Unverify(int id) => SetVerified(id, false);
-
-    private async Task<IActionResult> SetVerified(int id, bool value)
+    // KYC review queue. Defaults to providers awaiting review (Pending).
+    [HttpGet("kyc")]
+    public async Task<ActionResult<IEnumerable<KycReviewItem>>> KycQueue([FromQuery] KycStatus? status)
     {
-        var user = await _db.Users.FindAsync(id);
-        if (user is null) return NotFound();
-        if (user.Role != UserRole.Provider)
-            return BadRequest("Only providers can be verified.");
-        user.IsVerified = value;
+        var want = status ?? KycStatus.Pending;
+        var providers = await _db.Users
+            .Include(u => u.KycDocuments)
+            .Where(u => u.Role == UserRole.Provider && u.KycStatus == want)
+            .OrderBy(u => u.KycSubmittedAt)
+            .ToListAsync();
+
+        return Ok(providers.Select(u => new KycReviewItem
+        {
+            ProviderId = u.Id,
+            ProviderName = u.FullName,
+            Email = u.Email,
+            Status = u.KycStatus.ToString(),
+            IsVerified = u.IsVerified,
+            SubmittedAt = u.KycSubmittedAt,
+            RejectionReason = u.KycRejectionReason,
+            Documents = u.KycDocuments.OrderBy(d => d.DocType).Select(d => new KycDocItem
+            {
+                Id = d.Id,
+                DocType = d.DocType.ToString(),
+                FileName = d.FileName,
+                Url = $"/api/kyc/file/{d.Id}",
+                UploadedAt = d.UploadedAt
+            }).ToList()
+        }));
+    }
+
+    // One provider's KYC detail (for the review modal).
+    [HttpGet("kyc/{providerId:int}")]
+    public async Task<ActionResult<KycReviewItem>> KycOne(int providerId)
+    {
+        var u = await _db.Users.Include(x => x.KycDocuments)
+            .FirstOrDefaultAsync(x => x.Id == providerId && x.Role == UserRole.Provider);
+        if (u is null) return NotFound();
+        return Ok(new KycReviewItem
+        {
+            ProviderId = u.Id,
+            ProviderName = u.FullName,
+            Email = u.Email,
+            Status = u.KycStatus.ToString(),
+            IsVerified = u.IsVerified,
+            SubmittedAt = u.KycSubmittedAt,
+            RejectionReason = u.KycRejectionReason,
+            Documents = u.KycDocuments.OrderBy(d => d.DocType).Select(d => new KycDocItem
+            {
+                Id = d.Id,
+                DocType = d.DocType.ToString(),
+                FileName = d.FileName,
+                Url = $"/api/kyc/file/{d.Id}",
+                UploadedAt = d.UploadedAt
+            }).ToList()
+        });
+    }
+
+    // Approve KYC → provider becomes verified.
+    [HttpPost("kyc/{providerId:int}/approve")]
+    public async Task<IActionResult> ApproveKyc(int providerId)
+    {
+        var user = await _db.Users.FindAsync(providerId);
+        if (user is null || user.Role != UserRole.Provider) return NotFound();
+        if (user.KycStatus != KycStatus.Pending)
+            return Conflict($"KYC is {user.KycStatus}, not Pending.");
+
+        user.KycStatus = KycStatus.Approved;
+        user.IsVerified = true;
+        user.KycReviewedAt = DateTime.UtcNow;
+        user.KycRejectionReason = null;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // Reject KYC (requires a reason) → provider stays unverified, may resubmit.
+    [HttpPost("kyc/{providerId:int}/reject")]
+    public async Task<IActionResult> RejectKyc(int providerId, KycRejectRequest req)
+    {
+        var user = await _db.Users.FindAsync(providerId);
+        if (user is null || user.Role != UserRole.Provider) return NotFound();
+        if (user.KycStatus != KycStatus.Pending)
+            return Conflict($"KYC is {user.KycStatus}, not Pending.");
+
+        user.KycStatus = KycStatus.Rejected;
+        user.IsVerified = false;
+        user.KycReviewedAt = DateTime.UtcNow;
+        user.KycRejectionReason = req.Reason.Trim();
         await _db.SaveChangesAsync();
         return NoContent();
     }

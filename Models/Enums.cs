@@ -22,3 +22,20 @@ public enum PaymentStatus
     Paid = 1,
     Failed = 2
 }
+
+public enum KycStatus
+{
+    NotSubmitted = 0,
+    Pending = 1,
+    Approved = 2,
+    Rejected = 3
+}
+
+public enum KycDocType
+{
+    NationalId = 0,
+    Passport = 1,
+    DrivingLicense = 2,
+    Selfie = 3,
+    AddressProof = 4
+}
