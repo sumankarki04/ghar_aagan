@@ -357,10 +357,14 @@ async function jobAction(id, action) {
 // ---------- admin ----------
 async function loadAdmin() {
     const s = await API.get("/admin/dashboard");
-    paint(el("adminStats"), [
-        ["Customers", s.customers], ["Providers", s.providers], ["Listings", s.listings],
-        ["Bookings", s.bookings], ["Completed", s.completed], ["Revenue", money(s.paidRevenue)]
-    ].map(([label, num]) => `<div class="stat"><div class="num">${esc(num)}</div><div class="label">${esc(label)}</div></div>`).join(""));
+    const cards = [
+        ["customers", "Customers", s.customers], ["providers", "Providers", s.providers],
+        ["listings", "Listings", s.listings], ["bookings", "Bookings", s.bookings],
+        ["completed", "Completed", s.completed], ["revenue", "Revenue", money(s.paidRevenue)]
+    ];
+    paint(el("adminStats"), cards.map(([key, label, num]) =>
+        `<button class="stat" data-stat="${key}"><div class="num">${esc(num)}</div><div class="label">${esc(label)} ›</div></button>`).join(""));
+    el("adminStats").querySelectorAll("[data-stat]").forEach(b => b.onclick = () => openDetail(b.dataset.stat));
 
     const providers = await API.get("/admin/users?role=1");
     paint(el("adminProviders"), !providers.length ? `<p class="empty">No providers yet.</p>` : providers.map(p => `
@@ -391,6 +395,45 @@ async function toggleVerify(id, action) {
         loadAdmin();
     } catch (e) { toast(e.message, "error"); }
 }
+
+// Drill-down: clicking a dashboard stat opens a modal listing the underlying records.
+async function openDetail(kind) {
+    const body = el("detailBody");
+    let rows = [], heading = "", render;
+    try {
+        if (kind === "customers" || kind === "providers") {
+            const role = kind === "customers" ? 0 : 1;
+            rows = await API.get(`/admin/users?role=${role}`);
+            heading = kind === "customers" ? "Customers" : "Providers";
+            render = u => `<div class="card"><div class="info">
+                <h3>${esc(u.fullName)} ${u.isVerified && kind === "providers" ? `<span class="verified">${ico("i-shield")} Verified</span>` : ""}</h3>
+                <p class="desc">${esc(u.email)}${u.phone ? " · " + esc(u.phone) : ""} · joined ${esc(fmtDate(u.createdAt))}</p>
+            </div></div>`;
+        } else if (kind === "listings") {
+            rows = await API.get("/admin/listings");
+            heading = "Listings";
+            render = l => `<div class="card"><div class="info">
+                <h3>${esc(l.title)} ${l.isActive ? "" : "<small>(inactive)</small>"}</h3>
+                <p class="desc">${money(l.price)} · ${pin(l.city)} · by ${esc(l.provider)}</p>
+            </div></div>`;
+        } else {
+            rows = await API.get("/admin/bookings");
+            if (kind === "completed") rows = rows.filter(b => b.status === "Completed");
+            if (kind === "revenue") rows = rows.filter(b => b.payment === "Paid");
+            heading = kind === "completed" ? "Completed bookings"
+                : kind === "revenue" ? "Paid bookings (revenue)" : "All bookings";
+            render = b => `<div class="card"><div class="info">
+                <h3>${esc(b.service)}</h3>
+                <p class="desc">${esc(b.customer)} → ${esc(b.provider)} · ${esc(fmtDate(b.scheduledAt))}</p>
+                <span class="pill ${esc(b.status)}">${esc(b.status)}</span>
+                <span class="pill ${esc(b.payment)}">${esc(b.payment)}</span> · ${money(b.amount)}
+            </div></div>`;
+        }
+        el("detailTitle").textContent = `${heading} (${rows.length})`;
+        paint(body, rows.length ? rows.map(render).join("") : `<p class="empty">Nothing here yet.</p>`);
+        el("detailModal").classList.remove("hidden");
+    } catch (e) { toast(e.message, "error"); }
+}
 async function deleteCategory(id) {
     if (!confirm("Delete category?")) return;
     try { await API.del(`/categories/${id}`); toast("Category deleted."); await loadCategories(); loadAdmin(); }
@@ -405,6 +448,10 @@ function wire() {
     $$("[data-close]").forEach(b => b.onclick = closeAuth);
     $$("[data-auth-tab]").forEach(b => b.onclick = () => switchAuthTab(b.dataset.authTab));
     el("authModal").onclick = (e) => { if (e.target.id === "authModal") closeAuth(); };
+
+    const detail = el("detailModal");
+    detail.querySelector("[data-detail-close]").onclick = () => detail.classList.add("hidden");
+    detail.onclick = (e) => { if (e.target.id === "detailModal") detail.classList.add("hidden"); };
 
     el("regRole").onchange = (e) => el("regBio").classList.toggle("hidden", e.target.value !== "1");
 

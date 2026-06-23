@@ -57,6 +57,54 @@ public class AdminController : ControllerBase
         return Ok(users);
     }
 
+    [HttpGet("listings")]
+    public async Task<IActionResult> Listings()
+    {
+        var listings = await _db.Listings
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(l => new
+            {
+                l.Id,
+                l.Title,
+                Provider = l.Provider!.FullName,
+                l.City,
+                l.Price,
+                l.IsActive,
+                l.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(listings);
+    }
+
+    [HttpGet("bookings")]
+    public async Task<IActionResult> Bookings()
+    {
+        // Pull enums as values, stringify in memory (EF can't translate enum.ToString()).
+        var rows = await _db.Bookings
+            .OrderByDescending(b => b.CreatedAt)
+            .Select(b => new
+            {
+                b.Id,
+                Service = b.ServiceListing!.Title,
+                Customer = b.Customer!.FullName,
+                Provider = b.ServiceListing!.Provider!.FullName,
+                b.Status,
+                Amount = b.Payment != null ? b.Payment.Amount : 0,
+                PayStatus = b.Payment != null ? b.Payment.Status : PaymentStatus.Pending,
+                b.ScheduledAt
+            })
+            .ToListAsync();
+
+        return Ok(rows.Select(r => new
+        {
+            r.Id, r.Service, r.Customer, r.Provider,
+            Status = r.Status.ToString(),
+            r.Amount,
+            Payment = r.PayStatus.ToString(),
+            r.ScheduledAt
+        }));
+    }
+
     [HttpPost("providers/{id:int}/verify")]
     public Task<IActionResult> Verify(int id) => SetVerified(id, true);
 

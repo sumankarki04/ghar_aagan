@@ -203,6 +203,17 @@
         <div class="container">Ghar Aagan · A home services marketplace · Final year project</div>
     </footer>
 
+    <!-- Admin drill-down modal (opened by clicking a dashboard stat) -->
+    <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Details">
+        <div class="modal-card wide">
+            <button class="modal-close" data-detail-close aria-label="Close">
+                <svg class="icon"><use href="#i-x"/></svg>
+            </button>
+            <h2 id="detailTitle"></h2>
+            <div id="detailBody" class="list"></div>
+        </div>
+    </div>
+
     <div id="toast" class="toast hidden" role="status"></div>
 
     <script src="js/api.js"></script>

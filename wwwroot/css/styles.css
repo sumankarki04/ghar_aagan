@@ -1,24 +1,24 @@
 /* ===== Ghar Aagan — Trust & Authority design system ===== */
 :root {
-    --ink: #020617;          /* text */
-    --primary: #0F172A;      /* slate-900 brand */
-    --secondary: #334155;    /* slate-700 */
-    --cta: #0369A1;          /* trust blue */
-    --cta-dark: #075985;
-    --accent: #EA580C;       /* safety orange */
-    --success: #047857;
-    --success-dark: #036249;
+    --ink: #111827;          /* text primary (spec) */
+    --primary: #1B3A4B;      /* navy — nav, filled buttons, active tab (spec) */
+    --secondary: #374151;
+    --cta: #1B3A4B;          /* filled buttons = navy (spec) */
+    --cta-dark: #152E3B;
+    --accent: #D97706;       /* rating stars (amber) */
+    --success: #1A7A5E;      /* accent teal — Verify button + Verified badge (spec) */
+    --success-dark: #155F49;
     --danger: #B91C1C;
     --danger-dark: #991B1B;
     --warn: #B45309;
     --warn-dark: #92400E;
-    --bg: #F8FAFC;
+    --bg: #F5F5F5;           /* light gray page bg (spec) */
     --surface: #FFFFFF;
-    --surface-2: #F1F5F9;    /* subtle fill / hover */
-    --info-bg: #E0F2FE;      /* light blue tint */
-    --muted: #475569;        /* slate-600 (AA on white) */
-    --line: #E2E8F0;
-    --line-strong: #CBD5E1;
+    --surface-2: #F3F4F6;    /* subtle fill / hover */
+    --info-bg: #E6EEF2;      /* light navy tint */
+    --muted: #6B7280;        /* text muted (spec) */
+    --line: #E5E7EB;         /* border (spec) */
+    --line-strong: #D1D5DB;
     --radius: 14px;
     --radius-md: 12px;
     --radius-sm: 9px;
@@ -114,9 +114,9 @@ main { min-height: 60vh; }
 /* ===== Hero ===== */
 .hero {
     background:
-        radial-gradient(900px 400px at 80% -10%, rgba(3,105,161,.25), transparent 60%),
-        radial-gradient(700px 350px at 0% 0%, rgba(234,88,12,.16), transparent 55%),
-        linear-gradient(160deg, #0F172A, #1E293B);
+        radial-gradient(900px 400px at 80% -10%, rgba(26,122,94,.28), transparent 60%),
+        radial-gradient(700px 350px at 0% 0%, rgba(27,58,75,.55), transparent 55%),
+        linear-gradient(160deg, #1B3A4B, #152E3B);
     color: #fff; padding: 64px 24px 56px;
 }
 .hero-inner { max-width: 760px; margin: 0 auto; text-align: center; }
@@ -133,7 +133,7 @@ main { min-height: 60vh; }
 .searchbar input:focus { outline: none; }
 .trust-row { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
 .trust { display: inline-flex; align-items: center; gap: 7px; color: #E2E8F0; font-size: 14px; font-weight: 600; }
-.trust .icon { width: 18px; height: 18px; color: #7DD3FC; }
+.trust .icon { width: 18px; height: 18px; color: #6FD3B3; }
 
 /* ===== Category chips ===== */
 .chips { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -190,7 +190,7 @@ label input, label select, label textarea { margin-top: 5px; }
 .row-icon .icon { width: 15px; height: 15px; color: var(--muted); }
 .card-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .verified { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
-    color: var(--success); background: #D1FAE5; padding: 2px 9px; border-radius: var(--radius-pill);
+    color: var(--success); background: #E3F4EE; padding: 2px 9px; border-radius: var(--radius-pill);
     vertical-align: middle; }
 .verified .icon { width: 13px; height: 13px; }
 
@@ -214,6 +214,10 @@ label input, label select, label textarea { margin-top: 5px; }
     border: 1px solid var(--line); text-align: center; }
 .stat .num { font-family: "Lexend", sans-serif; font-size: 30px; font-weight: 800; color: var(--cta); }
 .stat .label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+button.stat { width: 100%; font-family: inherit; cursor: pointer;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+button.stat:hover { border-color: var(--cta); box-shadow: var(--shadow); transform: translateY(-2px); }
+button.stat:focus-visible { outline: none; box-shadow: var(--ring); }
 
 /* ===== Forms ===== */
 .form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
@@ -229,6 +233,8 @@ label input, label select, label textarea { margin-top: 5px; }
     align-items: center; justify-content: center; z-index: 100; padding: 16px; backdrop-filter: blur(3px); }
 .modal-card { background: var(--surface); border-radius: var(--radius-lg); padding: 30px; width: 100%; max-width: 420px;
     position: relative; box-shadow: var(--shadow); }
+.modal-card.wide { max-width: 760px; max-height: 82vh; overflow-y: auto; }
+.modal-card.wide h2 { color: var(--primary); margin-bottom: 16px; }
 .modal-close { position: absolute; top: 14px; right: 14px; background: var(--surface-2); border: none;
     width: 40px; height: 40px; border-radius: var(--radius-sm); cursor: pointer; color: var(--secondary);
     display: grid; place-items: center; }
