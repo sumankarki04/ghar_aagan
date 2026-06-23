@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+out/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# SQLite runtime database (regenerated + seeded on run)
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets — JWT key & admin password live in user-secrets, never the repo
+secrets.json
+
+# Logs / OS
+*.log
+Thumbs.db
+.DS_Store

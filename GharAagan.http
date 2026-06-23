@@ -1,0 +1,6 @@
+@GharAagan_HostAddress = http://localhost:5049
+
+GET {{GharAagan_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghar Aagan — Trusted Home Services Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+    <!-- ===== SVG icon sprite (Lucide-style, stroke = currentColor) ===== -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+        <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M9 13.5L7 22l5-3 5 3-2-8.5"/></symbol>
+        <!-- category icons -->
+        <symbol id="c-plumbing" viewBox="0 0 24 24"><path d="M12 2.7l5.7 5.6a8 8 0 1 1-11.4 0z"/></symbol>
+        <symbol id="c-electrical" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+        <symbol id="c-cleaning" viewBox="0 0 24 24"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7z"/></symbol>
+        <symbol id="c-painting" viewBox="0 0 24 24"><rect x="3" y="3" width="13" height="6" rx="1"/><path d="M16 6h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-7"/><path d="M11 14v3"/><rect x="9" y="17" width="4" height="5" rx="1"/></symbol>
+        <symbol id="c-carpentry" viewBox="0 0 24 24"><path d="M14 7l-1.5-1.5a2 2 0 0 0-3 0L3 12l4 4 6.5-6.5a2 2 0 0 0 0-3z"/><path d="M14 7l7 7-3 3-7-7"/></symbol>
+        <symbol id="c-appliance" viewBox="0 0 24 24"><path d="M12 2v6"/><path d="M5 8h14v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 13h.01"/></symbol>
+        <symbol id="c-default" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2z"/></symbol>
+    </svg>
+
+    <header class="topbar">
+        <a class="brand" href="/">
+            <span class="logo"><svg class="icon"><use href="#i-home"/></svg></span>
+            <div>
+                <h1>Ghar Aagan</h1>
+                <p class="tagline">Trusted home services, at your doorstep</p>
+            </div>
+        </a>
+        <nav id="nav" class="nav">
+            <span id="userBadge" class="badge hidden"></span>
+            <button id="loginBtn" class="btn ghost">Login</button>
+            <button id="registerBtn" class="btn">Sign up</button>
+            <button id="logoutBtn" class="btn ghost icon-btn hidden" aria-label="Log out">
+                <svg class="icon"><use href="#i-logout"/></svg> Logout
+            </button>
+        </nav>
+    </header>
+
+    <!-- Auth modal -->
+    <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Authentication">
+        <div class="modal-card">
+            <button class="modal-close" data-close aria-label="Close">
+                <svg class="icon"><use href="#i-x"/></svg>
+            </button>
+            <div class="tabs">
+                <button class="tab active" data-auth-tab="login">Login</button>
+                <button class="tab" data-auth-tab="register">Register</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <h2>Welcome back</h2>
+                <label for="li-email">Email</label>
+                <input id="li-email" type="email" name="email" placeholder="you@example.com" required />
+                <label for="li-pass">Password</label>
+                <input id="li-pass" type="password" name="password" placeholder="Your password" required />
+                <button class="btn block" type="submit">Login</button>
+                <p class="hint">Admin demo · admin@gharaagan.com / Admin@123</p>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <h2>Create account</h2>
+                <label for="rg-name">Full name</label>
+                <input id="rg-name" type="text" name="fullName" placeholder="Your name" required />
+                <label for="rg-email">Email</label>
+                <input id="rg-email" type="email" name="email" placeholder="you@example.com" required />
+                <label for="rg-pass">Password</label>
+                <input id="rg-pass" type="password" name="password" placeholder="Min 6 characters" required minlength="6" />
+                <label for="rg-phone">Phone <span class="opt">(optional)</span></label>
+                <input id="rg-phone" type="text" name="phone" placeholder="98XXXXXXXX" />
+                <label for="regRole">I want to</label>
+                <select name="role" id="regRole">
+                    <option value="0">Hire a service (Customer)</option>
+                    <option value="1">Offer services (Provider)</option>
+                </select>
+                <textarea name="bio" id="regBio" class="hidden" placeholder="Short bio / what you offer"></textarea>
+                <button class="btn block" type="submit">Create account</button>
+            </form>
+            <p id="authError" class="error" role="alert"></p>
+        </div>
+    </div>
+
+    <main>
+        <!-- role-driven tab bar -->
+        <div class="container"><div id="appTabs" class="apptabs"></div></div>
+
+        <!-- ===== Browse / Search ===== -->
+        <section id="view-browse" class="view">
+            <div class="hero">
+                <div class="hero-inner">
+                    <h2 class="hero-title">Find trusted help for every corner of your home</h2>
+                    <p class="hero-sub">Vetted local professionals for plumbing, electrical, cleaning and more.</p>
+                    <div class="searchbar">
+                        <span class="searchbar-icon"><svg class="icon"><use href="#i-search"/></svg></span>
+                        <input type="text" id="fKeyword" placeholder="What do you need done?" aria-label="Search services" />
+                        <button class="btn" id="searchBtn">Search</button>
+                    </div>
+                    <div class="trust-row">
+                        <span class="trust"><svg class="icon"><use href="#i-shield"/></svg> Local professionals</span>
+                        <span class="trust"><svg class="icon"><use href="#i-star"/></svg> Rated &amp; reviewed</span>
+                        <span class="trust"><svg class="icon"><use href="#i-clock"/></svg> Book in minutes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container">
+                <h3 class="section-title">Browse by category</h3>
+                <div id="categoryChips" class="chips"></div>
+
+                <div class="filters">
+                    <select id="fCategory" aria-label="Category"><option value="">All categories</option></select>
+                    <input type="text" id="fCity" placeholder="City" aria-label="City" />
+                    <input type="number" id="fMin" placeholder="Min Rs" min="0" aria-label="Minimum price" />
+                    <input type="number" id="fMax" placeholder="Max Rs" min="0" aria-label="Maximum price" />
+                    <button class="btn ghost" id="clearFilters" type="button">Clear</button>
+                </div>
+
+                <h3 class="section-title">Available services</h3>
+                <div id="listings" class="grid"></div>
+            </div>
+        </section>
+
+        <!-- ===== Customer bookings ===== -->
+        <section id="view-mybookings" class="view hidden">
+            <div class="container">
+                <h2 class="page-title">My bookings</h2>
+                <div id="myBookings" class="list"></div>
+            </div>
+        </section>
+
+        <!-- ===== Provider listings ===== -->
+        <section id="view-mylistings" class="view hidden">
+            <div class="container">
+                <div class="row-between">
+                    <h2 class="page-title">My listings</h2>
+                    <button class="btn icon-btn" id="newListingBtn">
+                        <svg class="icon"><use href="#i-plus"/></svg> New listing
+                    </button>
+                </div>
+                <form id="listingForm" class="card form hidden">
+                    <input type="hidden" name="id" />
+                    <label>Title<input type="text" name="title" placeholder="e.g. Pipe leak repair" required /></label>
+                    <label>Description<textarea name="description" placeholder="Describe the service"></textarea></label>
+                    <div class="form-row">
+                        <label>Price (Rs)<input type="number" name="price" placeholder="1500" min="0" step="0.01" required /></label>
+                        <label>City<input type="text" name="city" placeholder="Kathmandu" required /></label>
+                        <label>Category<select name="categoryId" id="listingCategory" required></select></label>
+                    </div>
+                    <label class="check"><input type="checkbox" name="isActive" checked /> Active (visible to customers)</label>
+                    <div class="form-row">
+                        <button class="btn" type="submit">Save listing</button>
+                        <button class="btn ghost" type="button" id="cancelListing">Cancel</button>
+                    </div>
+                </form>
+                <div id="myListings" class="grid"></div>
+            </div>
+        </section>
+
+        <!-- ===== Provider job requests ===== -->
+        <section id="view-jobs" class="view hidden">
+            <div class="container">
+                <h2 class="page-title">Job requests</h2>
+                <div id="providerJobs" class="list"></div>
+            </div>
+        </section>
+
+        <!-- ===== Admin dashboard ===== -->
+        <section id="view-admin" class="view hidden">
+            <div class="container">
+                <h2 class="page-title">Admin dashboard</h2>
+                <div id="adminStats" class="stats"></div>
+                <h3 class="section-title">Categories</h3>
+                <form id="categoryForm" class="card form inline">
+                    <input type="text" name="name" placeholder="New category name" required />
+                    <input type="text" name="description" placeholder="Description" />
+                    <button class="btn icon-btn" type="submit"><svg class="icon"><use href="#i-plus"/></svg> Add</button>
+                </form>
+                <div id="adminCategories" class="list"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">Ghar Aagan · A home services marketplace · Final year project</div>
+    </footer>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
