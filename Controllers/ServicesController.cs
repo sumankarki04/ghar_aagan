@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using GharAagan.Data;
 using GharAagan.Dtos;
 using GharAagan.Models;
@@ -24,12 +25,7 @@ public class ServicesController : ControllerBase
         [FromQuery] decimal? minPrice,
         [FromQuery] decimal? maxPrice)
     {
-        var query = _db.Listings
-            .Include(l => l.Category)
-            .Include(l => l.Provider)
-            .Include(l => l.Reviews)
-            .Where(l => l.IsActive)
-            .AsQueryable();
+        var query = _db.Listings.Where(l => l.IsActive);
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -43,19 +39,23 @@ public class ServicesController : ControllerBase
         if (minPrice is decimal min) query = query.Where(l => l.Price >= min);
         if (maxPrice is decimal max) query = query.Where(l => l.Price <= max);
 
-        var listings = await query.OrderByDescending(l => l.CreatedAt).ToListAsync();
-        return Ok(listings.Select(ToResponse));
+        // Project in-query: rating average/count computed by SQL, no review rows loaded.
+        var listings = await query
+            .OrderByDescending(l => l.CreatedAt)
+            .Select(Projection)
+            .ToListAsync();
+        return Ok(listings);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ListingResponse>> Get(int id)
     {
+        // Public endpoint: only active listings. Providers use /services/mine for their own (incl. inactive).
         var listing = await _db.Listings
-            .Include(l => l.Category)
-            .Include(l => l.Provider)
-            .Include(l => l.Reviews)
-            .FirstOrDefaultAsync(l => l.Id == id);
-        return listing is null ? NotFound() : Ok(ToResponse(listing));
+            .Where(l => l.Id == id && l.IsActive)
+            .Select(Projection)
+            .FirstOrDefaultAsync();
+        return listing is null ? NotFound() : Ok(listing);
     }
 
     // Provider: list my own listings (including inactive).
@@ -65,13 +65,11 @@ public class ServicesController : ControllerBase
     {
         var providerId = User.GetUserId();
         var listings = await _db.Listings
-            .Include(l => l.Category)
-            .Include(l => l.Provider)
-            .Include(l => l.Reviews)
             .Where(l => l.ProviderId == providerId)
             .OrderByDescending(l => l.CreatedAt)
+            .Select(Projection)
             .ToListAsync();
-        return Ok(listings.Select(ToResponse));
+        return Ok(listings);
     }
 
     [Authorize(Roles = "Provider")]
@@ -94,10 +92,8 @@ public class ServicesController : ControllerBase
         _db.Listings.Add(listing);
         await _db.SaveChangesAsync();
 
-        // Reload with navs for response shaping.
-        await _db.Entry(listing).Reference(l => l.Category).LoadAsync();
-        await _db.Entry(listing).Reference(l => l.Provider).LoadAsync();
-        return CreatedAtAction(nameof(Get), new { id = listing.Id }, ToResponse(listing));
+        var dto = await _db.Listings.Where(l => l.Id == listing.Id).Select(Projection).FirstAsync();
+        return CreatedAtAction(nameof(Get), new { id = listing.Id }, dto);
     }
 
     [Authorize(Roles = "Provider")]
@@ -137,7 +133,9 @@ public class ServicesController : ControllerBase
         return NoContent();
     }
 
-    private static ListingResponse ToResponse(ServiceListing l) => new()
+    // Single source of truth for shaping a listing. Translated to SQL by EF: the
+    // average and count run as correlated aggregates, so review rows are never loaded.
+    private static readonly Expression<Func<ServiceListing, ListingResponse>> Projection = l => new ListingResponse
     {
         Id = l.Id,
         Title = l.Title,
@@ -146,11 +144,11 @@ public class ServicesController : ControllerBase
         City = l.City,
         IsActive = l.IsActive,
         CategoryId = l.CategoryId,
-        CategoryName = l.Category?.Name ?? string.Empty,
+        CategoryName = l.Category!.Name,
         ProviderId = l.ProviderId,
-        ProviderName = l.Provider?.FullName ?? string.Empty,
-        ProviderVerified = l.Provider?.IsVerified ?? false,
-        AverageRating = l.Reviews.Count > 0 ? Math.Round(l.Reviews.Average(r => r.Rating), 2) : 0,
+        ProviderName = l.Provider!.FullName,
+        ProviderVerified = l.Provider.IsVerified,
+        AverageRating = l.Reviews.Average(r => (double?)r.Rating) ?? 0,
         ReviewCount = l.Reviews.Count,
         CreatedAt = l.CreatedAt
     };

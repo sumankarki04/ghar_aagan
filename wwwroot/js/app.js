@@ -26,7 +26,7 @@ const fmtDate = (d) => new Date(d).toLocaleString();
 // Inline SVG icon reference (symbols defined in index.html sprite).
 const ico = (id) => `<svg class="icon" aria-hidden="true"><use href="#${id}"></use></svg>`;
 const stars = (avg, count) => count > 0
-    ? `<span class="stars">${ico("i-star")} ${avg} (${count})</span>`
+    ? `<span class="stars">${ico("i-star")} ${Math.round(avg * 10) / 10} (${count})</span>`
     : `<span class="desc">No reviews yet</span>`;
 const pin = (city) => `<span class="row-icon">${ico("i-pin")} ${esc(city)}</span>`;
 
