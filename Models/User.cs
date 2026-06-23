@@ -23,6 +23,9 @@ public class User
 
     public UserRole Role { get; set; } = UserRole.Customer;
 
+    // Providers start unverified; an admin verifies them. Shown as a trust badge.
+    public bool IsVerified { get; set; }
+
     // Provider-only profile text. Null for customers/admins.
     [MaxLength(1000)]
     public string? Bio { get; set; }

@@ -187,7 +187,7 @@ async function loadListings() {
                 <span class="price">${money(l.price)}</span>
                 ${stars(l.averageRating, l.reviewCount)}
             </div>
-            <p class="desc">${pin(l.city)} · by ${esc(l.providerName)}</p>
+            <p class="desc">${pin(l.city)} · by ${esc(l.providerName)}${l.providerVerified ? ` <span class="verified">${ico("i-shield")} Verified</span>` : ""}</p>
             <div class="card-actions">
                 ${canBook ? `<button class="btn sm icon-btn" data-book="${l.id}" data-title="${esc(l.title)}">${ico("i-calendar")} Book now</button>` : ""}
                 <button class="btn ghost sm icon-btn" data-reviews="${l.id}">${ico("i-star")} Reviews</button>
@@ -362,12 +362,34 @@ async function loadAdmin() {
         ["Bookings", s.bookings], ["Completed", s.completed], ["Revenue", money(s.paidRevenue)]
     ].map(([label, num]) => `<div class="stat"><div class="num">${esc(num)}</div><div class="label">${esc(label)}</div></div>`).join(""));
 
+    const providers = await API.get("/admin/users?role=1");
+    paint(el("adminProviders"), !providers.length ? `<p class="empty">No providers yet.</p>` : providers.map(p => `
+        <div class="card">
+            <div class="info">
+                <h3>${esc(p.fullName)} ${p.isVerified ? `<span class="verified">${ico("i-shield")} Verified</span>` : ""}</h3>
+                <p class="desc">${esc(p.email)} · joined ${esc(fmtDate(p.createdAt))}</p>
+            </div>
+            <button class="btn ${p.isVerified ? "ghost" : "success"} sm" data-verify="${p.id}" data-action="${p.isVerified ? "unverify" : "verify"}">
+                ${p.isVerified ? "Unverify" : "Verify"}
+            </button>
+        </div>`).join(""));
+    el("adminProviders").querySelectorAll("[data-verify]").forEach(b =>
+        b.onclick = () => toggleVerify(+b.dataset.verify, b.dataset.action));
+
     paint(el("adminCategories"), categories.map(c => `
         <div class="card"><div class="info"><h3>${esc(c.name)}</h3><p class="desc">${esc(c.description || "")}</p></div>
         <button class="btn danger sm" data-delcat="${c.id}">Delete</button></div>`).join(""));
 
     el("adminCategories").querySelectorAll("[data-delcat]").forEach(b =>
         b.onclick = () => deleteCategory(+b.dataset.delcat));
+}
+
+async function toggleVerify(id, action) {
+    try {
+        await API.post(`/admin/providers/${id}/${action}`);
+        toast(`Provider ${action === "verify" ? "verified" : "unverified"}.`, "success");
+        loadAdmin();
+    } catch (e) { toast(e.message, "error"); }
 }
 async function deleteCategory(id) {
     if (!confirm("Delete category?")) return;

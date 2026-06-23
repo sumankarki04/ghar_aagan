@@ -37,7 +37,8 @@ public static class DbSeeder
                 Email = adminEmail,
                 PasswordHash = hash,
                 PasswordSalt = salt,
-                Role = UserRole.Admin
+                Role = UserRole.Admin,
+                IsVerified = true
             });
             await db.SaveChangesAsync();
         }

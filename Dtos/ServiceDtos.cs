@@ -43,6 +43,7 @@ public class ListingResponse
     public string CategoryName { get; set; } = string.Empty;
     public int ProviderId { get; set; }
     public string ProviderName { get; set; } = string.Empty;
+    public bool ProviderVerified { get; set; }
     public double AverageRating { get; set; }
     public int ReviewCount { get; set; }
     public DateTime CreatedAt { get; set; }

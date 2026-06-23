@@ -149,6 +149,7 @@ public class ServicesController : ControllerBase
         CategoryName = l.Category?.Name ?? string.Empty,
         ProviderId = l.ProviderId,
         ProviderName = l.Provider?.FullName ?? string.Empty,
+        ProviderVerified = l.Provider?.IsVerified ?? false,
         AverageRating = l.Reviews.Count > 0 ? Math.Round(l.Reviews.Average(r => r.Rating), 2) : 0,
         ReviewCount = l.Reviews.Count,
         CreatedAt = l.CreatedAt

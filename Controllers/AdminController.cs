@@ -50,9 +50,27 @@ public class AdminController : ControllerBase
                 u.Email,
                 u.Phone,
                 Role = u.Role.ToString(),
+                u.IsVerified,
                 u.CreatedAt
             })
             .ToListAsync();
         return Ok(users);
+    }
+
+    [HttpPost("providers/{id:int}/verify")]
+    public Task<IActionResult> Verify(int id) => SetVerified(id, true);
+
+    [HttpPost("providers/{id:int}/unverify")]
+    public Task<IActionResult> Unverify(int id) => SetVerified(id, false);
+
+    private async Task<IActionResult> SetVerified(int id, bool value)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user is null) return NotFound();
+        if (user.Role != UserRole.Provider)
+            return BadRequest("Only providers can be verified.");
+        user.IsVerified = value;
+        await _db.SaveChangesAsync();
+        return NoContent();
     }
 }
