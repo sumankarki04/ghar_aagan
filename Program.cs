@@ -1,6 +1,7 @@
 using GharAagan.Data;
 using GharAagan.Models;
 using GharAagan.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,6 +52,13 @@ using (var scope = app.Services.CreateScope())
 {
     await SeedData.InitializeAsync(scope.ServiceProvider);
 }
+
+// Behind Render/most PaaS the TLS proxy forwards X-Forwarded-Proto;
+// honor it so UseHttpsRedirection doesn't loop and auth cookies stay secure.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 if (!app.Environment.IsDevelopment())
 {

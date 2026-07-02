@@ -1,0 +1,13 @@
+bin/
+obj/
+publish/
+*.db
+*.db-shm
+*.db-wal
+.git/
+.claude/
+.vs/
+.vscode/
+Dockerfile
+render.yaml
+README.md

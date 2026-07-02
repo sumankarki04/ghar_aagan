@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ghar-aagan
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
