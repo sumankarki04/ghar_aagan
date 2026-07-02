@@ -1,0 +1,152 @@
+@model Booking
+@{
+    ViewData["Title"] = $"Booking #{Model.Id}";
+    var provider = Model.ProviderProfile;
+    var messages = (List<Message>)ViewBag.Messages;
+
+    var steps = new[] { BookingStatus.Pending, BookingStatus.Confirmed, BookingStatus.InProgress, BookingStatus.Completed };
+    int currentIndex = Array.IndexOf(steps, Model.Status);
+    bool isNegative = Model.Status is BookingStatus.Cancelled or BookingStatus.Rejected;
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Bookings">Bookings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">#@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h2 class="h5 mb-0">Booking #@Model.Id</h2>
+                    <span class="badge status-@Model.Status fs-6">@Model.Status</span>
+                </div>
+
+                @if (isNegative)
+                {
+                    <div class="alert alert-danger py-2">
+                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                        This booking was <strong>@Model.Status.ToString().ToLower()</strong>.
+                    </div>
+                }
+                else
+                {
+                    <div class="ga-timeline" role="list" aria-label="Booking progress">
+                        @for (int i = 0; i < steps.Length; i++)
+                        {
+                            var state = i < currentIndex ? "done" : i == currentIndex ? "current" : "";
+                            <div class="ga-timeline-step @state" role="listitem">
+                                <div class="dot" aria-hidden="true">@if (i < currentIndex) {<i class="bi bi-check"></i>}</div>
+                                <span class="lbl">@steps[i]</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <hr />
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Scheduled</dt>
+                    <dd class="col-sm-8">@Model.ScheduledDateTime.ToString("dddd, dd MMM yyyy · HH:mm")</dd>
+                    <dt class="col-sm-4">Service Address</dt>
+                    <dd class="col-sm-8">@Model.Address</dd>
+                    <dt class="col-sm-4">Price (est.)</dt>
+                    <dd class="col-sm-8"><span class="ga-price-chip">NPR @Model.Price.ToString("0")</span></dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                    {
+                        <dt class="col-sm-4">Customer Notes</dt>
+                        <dd class="col-sm-8">@Model.Notes</dd>
+                    }
+                    <dt class="col-sm-4">Requested On</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</dd>
+                </dl>
+
+                @if (Model.Review is not null)
+                {
+                    <hr />
+                    <h3 class="h6">Customer Review</h3>
+                    <span class="ga-stars" aria-label="@Model.Review.Rating out of 5">
+                        @for (int s = 1; s <= Model.Review.Rating; s++) {<i class="bi bi-star-fill" aria-hidden="true"></i>}
+                    </span>
+                    <p class="mb-0 mt-1">@Model.Review.Comment</p>
+                }
+
+                @if (Model.Status is BookingStatus.Pending or BookingStatus.Confirmed or BookingStatus.InProgress)
+                {
+                    <hr />
+                    <form asp-action="CancelBooking" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Force-cancel booking #@Model.Id?');">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-x-octagon me-1" aria-hidden="true"></i>Force Cancel Booking
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @* parties *@
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card h-100"><div class="card-body">
+                    <h3 class="h6 text-muted mb-2">Customer</h3>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="ga-avatar" aria-hidden="true">@string.Concat(Model.Customer.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                        <a asp-action="User" asp-route-id="@Model.CustomerId"><strong>@Model.Customer.FullName</strong></a>
+                    </div>
+                    <div class="small text-muted">@Model.Customer.Email<br />@Model.Customer.PhoneNumber<br />@Model.Customer.Address</div>
+                </div></div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100"><div class="card-body">
+                    <h3 class="h6 text-muted mb-2">Provider</h3>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="ga-avatar" aria-hidden="true">@string.Concat(provider.User.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                        <a asp-action="User" asp-route-id="@provider.UserId"><strong>@provider.User.FullName</strong></a>
+                    </div>
+                    <div class="small text-muted">
+                        @provider.ServiceCategory.Name · @provider.Location<br />
+                        @provider.User.Email<br />@provider.User.PhoneNumber
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary mt-2" asp-controller="Providers" asp-action="Details" asp-route-id="@provider.Id">
+                        Public Profile
+                    </a>
+                </div></div>
+            </div>
+        </div>
+    </div>
+
+    @* message log (read-only oversight) *@
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="h6 mb-1"><i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Message Log (@messages.Count)</h3>
+                <p class="small text-muted">Read-only. For dispute resolution.</p>
+                @if (!messages.Any())
+                {
+                    <p class="text-muted small mb-0">No messages in this booking.</p>
+                }
+                else
+                {
+                    <div class="ga-chat-body" style="max-height: 30rem;">
+                        @foreach (var message in messages)
+                        {
+                            var fromCustomer = message.SenderId == Model.CustomerId;
+                            <div class="ga-bubble-row @(fromCustomer ? "" : "mine")">
+                                <div class="ga-bubble @(fromCustomer ? "" : "mine")">
+                                    <div class="small fw-semibold">@message.Sender.FullName</div>
+                                    <div>@message.Content</div>
+                                    <div class="ga-bubble-time">@message.SentAt.ToLocalTime().ToString("dd MMM, HH:mm")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

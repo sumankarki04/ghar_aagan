@@ -1,0 +1,159 @@
+@model ProviderDashboardViewModel
+@{
+    ViewData["Title"] = "Provider Dashboard";
+    var profile = Model.Profile!;
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+        <h1 class="h2 mb-0">Provider Dashboard</h1>
+        <p class="text-muted mb-0">
+            @profile.ServiceCategory.Name · @profile.Location ·
+            @if (profile.IsVerified)
+            {
+                <span class="badge badge-verified"><i class="bi bi-patch-check-fill me-1"></i>Verified</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Verification pending</span>
+            }
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-green btn-sm" asp-action="EditProfile"><i class="bi bi-pencil me-1"></i>Edit Profile</a>
+        <a class="btn btn-marigold btn-sm" asp-action="Availability"><i class="bi bi-clock me-1"></i>Availability</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="ga-stat">
+            <div class="value">NPR @Model.TotalEarnings.ToString("N0")</div>
+            <div class="label">Total Earnings</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ga-stat">
+            <div class="value">@Model.CompletedJobs</div>
+            <div class="label">Completed Jobs</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ga-stat">
+            <div class="value">@Model.PendingBookings.Count</div>
+            <div class="label">New Requests</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="ga-stat">
+            <div class="value">@profile.AverageRating.ToString("0.0") <i class="bi bi-star-fill ga-stars fs-6"></i></div>
+            <div class="label">Average Rating</div>
+        </div>
+    </div>
+</div>
+
+<h4>New Booking Requests</h4>
+@if (!Model.PendingBookings.Any())
+{
+    <p class="text-muted">No pending requests right now.</p>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Customer</th><th>Scheduled</th><th>Address</th><th>Notes</th><th>Price (est.)</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.PendingBookings)
+                {
+                    <tr>
+                        <td>@booking.Customer.FullName<br /><span class="small text-muted">@booking.Customer.PhoneNumber</span></td>
+                        <td>@booking.ScheduledDateTime.ToString("dd MMM, HH:mm")</td>
+                        <td>@booking.Address</td>
+                        <td class="small text-muted">@booking.Notes</td>
+                        <td>NPR @booking.Price.ToString("0")</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Messages" asp-action="Thread" asp-route-id="@booking.Id"
+                               aria-label="Message customer"><i class="bi bi-chat-dots" aria-hidden="true"></i></a>
+                            <form asp-action="Accept" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-green">Accept</button>
+                            </form>
+                            <form asp-action="Reject" asp-route-id="@booking.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Reject this booking?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h4>Active Jobs</h4>
+@if (!Model.ActiveBookings.Any())
+{
+    <p class="text-muted">No active jobs.</p>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Customer</th><th>Scheduled</th><th>Address</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.ActiveBookings)
+                {
+                    <tr>
+                        <td>@booking.Customer.FullName<br /><span class="small text-muted">@booking.Customer.PhoneNumber</span></td>
+                        <td>@booking.ScheduledDateTime.ToString("dd MMM, HH:mm")</td>
+                        <td>@booking.Address</td>
+                        <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Messages" asp-action="Thread" asp-route-id="@booking.Id"
+                               aria-label="Message customer"><i class="bi bi-chat-dots" aria-hidden="true"></i></a>
+                            @if (booking.Status == BookingStatus.Confirmed)
+                            {
+                                <form asp-action="Start" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Start Job</button>
+                                </form>
+                            }
+                            <form asp-action="Complete" asp-route-id="@booking.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-terracotta">Mark Complete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h4>Job History</h4>
+@if (!Model.History.Any())
+{
+    <p class="text-muted">No past jobs yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Customer</th><th>Scheduled</th><th>Price</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.History)
+                {
+                    <tr>
+                        <td>@booking.Customer.FullName</td>
+                        <td>@booking.ScheduledDateTime.ToString("dd MMM yyyy, HH:mm")</td>
+                        <td>NPR @booking.Price.ToString("0")</td>
+                        <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

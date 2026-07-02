@@ -1,0 +1,132 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var totalForBar = Math.Max(1, Model.StatusCounts.Values.Sum());
+    var statusColors = new Dictionary<BookingStatus, string>
+    {
+        [BookingStatus.Pending] = "var(--ga-gold-600)",
+        [BookingStatus.Confirmed] = "var(--ga-success)",
+        [BookingStatus.InProgress] = "var(--ga-info)",
+        [BookingStatus.Completed] = "var(--ga-green-900)",
+        [BookingStatus.Cancelled] = "var(--ga-ink-600)",
+        [BookingStatus.Rejected] = "var(--ga-danger)"
+    };
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+@* ---- KPI tiles (clickable — drill into the matching admin page) ---- *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a class="text-decoration-none d-block" asp-action="Users" aria-label="View all users">
+            <div class="ga-stat ga-stat-link"><div class="value">@Model.TotalUsers</div><div class="label">Total Users <i class="bi bi-arrow-right" aria-hidden="true"></i></div></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a class="text-decoration-none d-block" asp-action="Providers" aria-label="View all providers">
+            <div class="ga-stat ga-stat-link"><div class="value">@Model.TotalProviders</div><div class="label">Providers <i class="bi bi-arrow-right" aria-hidden="true"></i></div></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a class="text-decoration-none d-block" asp-action="Bookings" aria-label="View all bookings">
+            <div class="ga-stat ga-stat-link"><div class="value">@Model.TotalBookings</div><div class="label">Total Bookings <i class="bi bi-arrow-right" aria-hidden="true"></i></div></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a class="text-decoration-none d-block" asp-action="Bookings" asp-route-status="Completed" aria-label="View completed bookings">
+            <div class="ga-stat ga-stat-link"><div class="value">NPR @Model.TotalRevenue.ToString("N0")</div><div class="label">Completed Job Value <i class="bi bi-arrow-right" aria-hidden="true"></i></div></div>
+        </a>
+    </div>
+</div>
+
+@if (Model.PendingVerifications > 0)
+{
+    <div class="alert alert-warning d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>
+            <strong>@Model.PendingVerifications provider@(Model.PendingVerifications == 1 ? "" : "s")</strong> waiting for verification.</span>
+        <a class="btn btn-sm btn-terracotta" asp-action="Providers" asp-route-filter="pending">Review Now</a>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    @* ---- Booking status breakdown ---- *@
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Booking Status Breakdown</h2>
+                <div class="ga-status-bar mb-3" role="img" aria-label="Booking status distribution">
+                    @foreach (var (status, count) in Model.StatusCounts.OrderBy(s => s.Key))
+                    {
+                        <div style="width: @(count * 100.0 / totalForBar)%; background: @statusColors[status];"
+                             title="@status: @count"></div>
+                    }
+                </div>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var (status, count) in Model.StatusCounts.OrderBy(s => s.Key))
+                    {
+                        <span class="small">
+                            <span class="ga-legend-dot" style="background: @statusColors[status];" aria-hidden="true"></span>
+                            @status <strong>@count</strong>
+                        </span>
+                    }
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between small text-muted">
+                    <span><i class="bi bi-star-fill ga-stars me-1" aria-hidden="true"></i>Platform rating: <strong>@Model.PlatformAverageRating.ToString("0.0")</strong> (@Model.TotalReviews reviews)</span>
+                    <span>Completed: <strong>@Model.CompletedBookings</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ---- Category performance ---- *@
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Category Performance</h2>
+                @{ var maxBookings = Math.Max(1, Model.CategoryStats.Select(c => c.BookingCount).DefaultIfEmpty(0).Max()); }
+                @foreach (var cat in Model.CategoryStats)
+                {
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi @cat.IconClass flex-shrink-0" style="color: var(--ga-green-700); width: 1.4rem;" aria-hidden="true"></i>
+                        <span class="small flex-shrink-0" style="width: 7.5rem;">@cat.Name</span>
+                        <div class="progress flex-fill" style="height: .55rem;" role="progressbar"
+                             aria-label="@cat.Name bookings" aria-valuenow="@cat.BookingCount" aria-valuemin="0" aria-valuemax="@maxBookings">
+                            <div class="progress-bar" style="width: @(cat.BookingCount * 100 / maxBookings)%; background: var(--ga-terra-500);"></div>
+                        </div>
+                        <span class="small text-muted flex-shrink-0" style="width: 6.5rem;">@cat.BookingCount jobs · @cat.ProviderCount prov.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ---- Recent bookings ---- *@
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Recent Bookings</h2>
+            <a class="small" asp-action="Bookings">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>#</th><th>Customer</th><th>Provider</th><th>Service</th><th>Scheduled</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var booking in Model.RecentBookings)
+                    {
+                        <tr class="ga-row-link" data-href="@Url.Action("Booking", new { id = booking.Id })">
+                            <td><a asp-action="Booking" asp-route-id="@booking.Id">#@booking.Id</a></td>
+                            <td><a asp-action="User" asp-route-id="@booking.CustomerId">@booking.Customer.FullName</a></td>
+                            <td><a asp-action="User" asp-route-id="@booking.ProviderProfile.UserId">@booking.ProviderProfile.User.FullName</a></td>
+                            <td>@booking.ProviderProfile.ServiceCategory.Name</td>
+                            <td>@booking.ScheduledDateTime.ToString("dd MMM, HH:mm")</td>
+                            <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

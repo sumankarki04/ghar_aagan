@@ -1,0 +1,105 @@
+@model Booking
+@{
+    ViewData["Title"] = $"Booking #{Model.Id}";
+    var provider = Model.ProviderProfile;
+
+    // Timeline steps for the standard flow; terminal negative states shown separately.
+    var steps = new[] { BookingStatus.Pending, BookingStatus.Confirmed, BookingStatus.InProgress, BookingStatus.Completed };
+    int currentIndex = Array.IndexOf(steps, Model.Status);
+    bool isNegative = Model.Status is BookingStatus.Cancelled or BookingStatus.Rejected;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="MyBookings">My Bookings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Booking #@Model.Id</li>
+    </ol>
+</nav>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div class="d-flex gap-3">
+                        <div class="ga-avatar" aria-hidden="true">@string.Concat(provider.User.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                        <div>
+                            <h1 class="h4 mb-0">@provider.User.FullName</h1>
+                            <span class="text-muted small">@provider.ServiceCategory.Name · @provider.Location</span>
+                        </div>
+                    </div>
+                    <span class="badge status-@Model.Status fs-6">@Model.Status</span>
+                </div>
+
+                @* ---- Status timeline ---- *@
+                @if (isNegative)
+                {
+                    <div class="alert alert-danger py-2">
+                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                        This booking was <strong>@Model.Status.ToString().ToLower()</strong>.
+                    </div>
+                }
+                else
+                {
+                    <div class="ga-timeline" role="list" aria-label="Booking progress">
+                        @for (int i = 0; i < steps.Length; i++)
+                        {
+                            var state = i < currentIndex ? "done" : i == currentIndex ? "current" : "";
+                            <div class="ga-timeline-step @state" role="listitem">
+                                <div class="dot" aria-hidden="true">
+                                    @if (i < currentIndex)
+                                    {
+                                        <i class="bi bi-check"></i>
+                                    }
+                                </div>
+                                <span class="lbl">@steps[i]</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <hr />
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Scheduled</dt>
+                    <dd class="col-sm-8">@Model.ScheduledDateTime.ToString("dddd, dd MMM yyyy · HH:mm")</dd>
+                    <dt class="col-sm-4">Service Address</dt>
+                    <dd class="col-sm-8">@Model.Address</dd>
+                    <dt class="col-sm-4">Estimated Price</dt>
+                    <dd class="col-sm-8"><span class="ga-price-chip">NPR @Model.Price.ToString("0")</span></dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                    {
+                        <dt class="col-sm-4">Your Notes</dt>
+                        <dd class="col-sm-8">@Model.Notes</dd>
+                    }
+                    <dt class="col-sm-4">Requested On</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            @if (Model.Status is not (BookingStatus.Cancelled or BookingStatus.Rejected))
+            {
+                <a class="btn btn-green" asp-controller="Messages" asp-action="Thread" asp-route-id="@Model.Id">
+                    <i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Message Provider
+                </a>
+            }
+            @if (Model.Status is BookingStatus.Pending or BookingStatus.Confirmed)
+            {
+                <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('Cancel this booking?');">
+                    <button type="submit" class="btn btn-outline-danger">Cancel Booking</button>
+                </form>
+            }
+            @if (Model.Status == BookingStatus.Completed && Model.Review is null)
+            {
+                <a class="btn btn-marigold" asp-action="Review" asp-route-id="@Model.Id">
+                    <i class="bi bi-star me-1" aria-hidden="true"></i>Leave Review
+                </a>
+            }
+            <a class="btn btn-outline-secondary ms-auto" asp-controller="Providers" asp-action="Details" asp-route-id="@provider.Id">
+                View Provider Profile
+            </a>
+        </div>
+    </div>
+</div>

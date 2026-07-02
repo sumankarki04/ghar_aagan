@@ -1,0 +1,95 @@
+@model BrowseProvidersViewModel
+@{
+    ViewData["Title"] = $"{Model.Category.Name} Providers";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Services</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Category.Name</li>
+    </ol>
+</nav>
+
+<div class="d-flex align-items-center gap-3 mb-1">
+    <div class="ga-category-icon" aria-hidden="true"><i class="bi @Model.Category.IconClass"></i></div>
+    <div>
+        <h1 class="mb-0 h2">@Model.Category.Name</h1>
+        <p class="text-muted mb-0">@Model.Category.Description</p>
+    </div>
+</div>
+
+<form method="get" class="row g-2 my-4" asp-action="Browse" role="search" aria-label="Filter providers by area">
+    <input type="hidden" name="categoryId" value="@Model.Category.Id" />
+    <div class="col-sm-8 col-md-6">
+        <label class="visually-hidden" for="locationFilter">Filter by area</label>
+        <input type="text" id="locationFilter" name="location" value="@Model.LocationFilter" class="form-control"
+               placeholder="Filter by area, e.g. Kathmandu - Baneshwor" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-green"><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>Search</button>
+    </div>
+</form>
+
+@if (!Model.Providers.Any())
+{
+    <div class="alert alert-warning">No providers found in this category yet. Please check back soon.</div>
+}
+else
+{
+    <p class="text-muted small">
+        <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>
+        Ranked by our recommendation engine: <strong>rating (60%)</strong> + <strong>location match (25%)</strong> + <strong>verification (15%)</strong>.
+    </p>
+
+    <div class="row g-3">
+        @foreach (var item in Model.Providers)
+        {
+            var p = item.Provider;
+            <div class="col-12 col-md-6">
+                <div class="card ga-provider-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex gap-3">
+                            <div class="ga-avatar" aria-hidden="true">@string.Concat(p.User.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                            <div class="flex-fill min-w-0">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <h2 class="h6 mb-1 text-truncate">@p.User.FullName</h2>
+                                    <span class="badge badge-score flex-shrink-0" title="Recommendation score">
+                                        <i class="bi bi-graph-up-arrow me-1" aria-hidden="true"></i>@item.Score.ToString("0.00")
+                                    </span>
+                                </div>
+                                <div class="mb-2 d-flex align-items-center flex-wrap gap-2">
+                                    @if (p.IsVerified)
+                                    {
+                                        <span class="badge badge-verified"><i class="bi bi-patch-check-fill me-1" aria-hidden="true"></i>Verified</span>
+                                    }
+                                    <span class="ga-stars small" aria-label="@p.AverageRating.ToString("0.0") out of 5 stars">
+                                        @for (int s = 1; s <= 5; s++)
+                                        {
+                                            <i class="bi @(s <= Math.Round(p.AverageRating) ? "bi-star-fill" : "bi-star")" aria-hidden="true"></i>
+                                        }
+                                    </span>
+                                    <span class="small text-muted">@p.AverageRating.ToString("0.0")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-muted small mb-2 mt-2">@(p.Bio.Length > 130 ? p.Bio[..130] + "…" : p.Bio)</p>
+
+                        <div class="d-flex align-items-center flex-wrap gap-3 small mb-3">
+                            <span><i class="bi bi-geo-alt me-1" style="color: var(--ga-green-700);" aria-hidden="true"></i>@p.Location</span>
+                            <span><i class="bi bi-briefcase me-1" style="color: var(--ga-green-700);" aria-hidden="true"></i>@p.YearsExperience yrs</span>
+                            <span class="ga-price-chip ms-auto">NPR @p.HourlyRate.ToString("0")/hr</span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-green" asp-action="Details" asp-route-id="@p.Id">View Profile</a>
+                            <a class="btn btn-sm btn-terracotta" asp-controller="Bookings" asp-action="Create" asp-route-providerId="@p.Id">
+                                <i class="bi bi-calendar-plus me-1" aria-hidden="true"></i>Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

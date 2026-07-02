@@ -1,0 +1,72 @@
+@model BookingCreateViewModel
+@{
+    ViewData["Title"] = "Book a Service";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h3 mb-1">Book @Model.ProviderName</h1>
+                <p class="text-muted">
+                    @Model.CategoryName ·
+                    <span class="fw-semibold" style="color: var(--ga-terracotta);">NPR @Model.HourlyRate.ToString("0")/hr</span>
+                </p>
+
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+                    <input type="hidden" asp-for="ProviderProfileId" />
+
+                    <div class="mb-3">
+                        <label asp-for="ScheduledDateTime" class="form-label"></label>
+                        <input asp-for="ScheduledDateTime" class="form-control" type="datetime-local" />
+                        <span asp-validation-for="ScheduledDateTime" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" placeholder="Where should the provider come?" />
+                        <span asp-validation-for="Address" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EstimatedHours" class="form-label"></label>
+                        <input asp-for="EstimatedHours" class="form-control" type="number" min="1" max="24" id="estimatedHours" />
+                        <span asp-validation-for="EstimatedHours" class="text-danger small"></span>
+                        <div class="form-text">
+                            Estimated price:
+                            <strong id="estimatedPrice" data-rate="@Model.HourlyRate">NPR @((Model.HourlyRate * Model.EstimatedHours).ToString("0"))</strong>
+                            (final price may vary with actual hours)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3"
+                                  placeholder="Describe the problem — e.g. kitchen tap leaking since yesterday"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-terracotta">
+                        <i class="bi bi-calendar-check me-1"></i>Send Booking Request
+                    </button>
+                    <a class="btn btn-outline-secondary" asp-controller="Providers" asp-action="Details" asp-route-id="@Model.ProviderProfileId">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Live price estimate = hourly rate × estimated hours.
+        const hoursInput = document.getElementById('estimatedHours');
+        const priceLabel = document.getElementById('estimatedPrice');
+        const rate = parseFloat(priceLabel.dataset.rate);
+        hoursInput?.addEventListener('input', () => {
+            const hours = Math.max(1, parseInt(hoursInput.value || '1', 10));
+            priceLabel.textContent = 'NPR ' + Math.round(rate * hours);
+        });
+    </script>
+}

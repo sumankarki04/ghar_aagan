@@ -1,0 +1,44 @@
+@model AvailabilityFormViewModel
+@{
+    ViewData["Title"] = "Weekly Availability";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h3 mb-3">Weekly Availability</h1>
+                <p class="text-muted small">Tick the days you work and set your hours. Customers see this on your profile.</p>
+
+                <form asp-action="Availability" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <table class="table align-middle">
+                        <thead>
+                            <tr><th>Day</th><th class="text-center">Available</th><th>From</th><th>To</th></tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Slots.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Slots[i].Day
+                                        <input type="hidden" asp-for="Slots[i].Day" />
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox" asp-for="Slots[i].Enabled" class="form-check-input" />
+                                    </td>
+                                    <td><input asp-for="Slots[i].StartTime" type="time" class="form-control form-control-sm" /></td>
+                                    <td><input asp-for="Slots[i].EndTime" type="time" class="form-control form-control-sm" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <button type="submit" class="btn btn-terracotta">Save Availability</button>
+                    <a class="btn btn-outline-secondary" asp-action="Dashboard">Back to Dashboard</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

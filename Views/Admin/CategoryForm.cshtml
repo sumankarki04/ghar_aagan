@@ -1,0 +1,61 @@
+@model CategoryFormViewModel
+@{
+    bool isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "New Category" : "Edit Category";
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5 mb-3">@(isNew ? "New Service Category" : $"Edit: {Model.Name}")</h2>
+                <form asp-action="SaveCategory" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Gardening" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="2"
+                                  placeholder="Short description shown on the home page"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="IconClass" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi @Model.IconClass" id="iconPreview" aria-hidden="true"></i></span>
+                            <input asp-for="IconClass" class="form-control" id="iconInput" placeholder="bi-flower1" />
+                        </div>
+                        <span asp-validation-for="IconClass" class="text-danger small"></span>
+                        <div class="form-text">
+                            Any <a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener">Bootstrap Icons</a> class,
+                            e.g. <code>bi-flower1</code>, <code>bi-bug</code>, <code>bi-truck</code>.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-terracotta">@(isNew ? "Create Category" : "Save Changes")</button>
+                    <a class="btn btn-outline-secondary" asp-action="Categories">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Live icon preview.
+        const iconInput = document.getElementById('iconInput');
+        const iconPreview = document.getElementById('iconPreview');
+        iconInput?.addEventListener('input', () => {
+            iconPreview.className = 'bi ' + iconInput.value.trim();
+        });
+    </script>
+}

@@ -1,0 +1,61 @@
+@model ManageProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h2 mb-1">My Profile</h1>
+        <p class="section-sub">Control your personal information. Your address pre-fills new bookings.</p>
+
+        <div class="card mb-3">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="ga-avatar lg" aria-hidden="true">@string.Concat(Model.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                <div>
+                    <strong class="d-block">@Model.Email</strong>
+                    <span class="badge bg-secondary">@Model.Roles</span>
+                </div>
+                <a class="btn btn-sm btn-outline-secondary ms-auto" asp-action="ChangePassword">
+                    <i class="bi bi-key me-1" aria-hidden="true"></i>Change Password
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Manage" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <input asp-for="Address" class="form-control" />
+                        <span asp-validation-for="Address" class="text-danger small"></span>
+                        <div class="form-text">Used to pre-fill booking addresses and improve provider recommendations near you.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-terracotta">Save Changes</button>
+                    @if (User.IsInRole("Provider"))
+                    {
+                        <a class="btn btn-outline-secondary" asp-controller="Provider" asp-action="EditProfile">
+                            Edit Provider Profile <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

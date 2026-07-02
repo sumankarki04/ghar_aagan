@@ -1,0 +1,46 @@
+@model List<ServiceCategory>
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">Service Categories (@Model.Count)</h2>
+    <a class="btn btn-sm btn-terracotta" asp-action="CreateCategory">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>New Category
+    </a>
+</div>
+
+<div class="row g-3">
+    @foreach (var category in Model)
+    {
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body d-flex gap-3">
+                    <div class="ga-category-icon flex-shrink-0" aria-hidden="true"><i class="bi @category.IconClass"></i></div>
+                    <div class="flex-fill min-w-0">
+                        <h3 class="h6 mb-1">@category.Name</h3>
+                        <p class="small text-muted mb-2">@category.Description</p>
+                        <span class="small text-muted">@category.Providers.Count provider(s)</span>
+                        <div class="d-flex gap-2 mt-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="EditCategory" asp-route-id="@category.Id">
+                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit
+                            </a>
+                            @if (!category.Providers.Any())
+                            {
+                                <form asp-action="DeleteCategory" asp-route-id="@category.Id" method="post"
+                                      onsubmit="return confirm('Delete category @category.Name?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

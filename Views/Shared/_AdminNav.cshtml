@@ -1,0 +1,19 @@
+@{
+    var current = (string?)ViewContext.RouteData.Values["action"] ?? "";
+    string Active(params string[] actions) => actions.Contains(current) ? "active" : "";
+}
+
+<ul class="nav nav-pills ga-admin-nav mb-4 flex-nowrap overflow-auto">
+    <li class="nav-item"><a class="nav-link @Active("Dashboard")" asp-controller="Admin" asp-action="Dashboard">
+        <i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>Overview</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Providers", "Verifications")" asp-controller="Admin" asp-action="Providers">
+        <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Providers</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Bookings")" asp-controller="Admin" asp-action="Bookings">
+        <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>Bookings</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Users")" asp-controller="Admin" asp-action="Users">
+        <i class="bi bi-people me-1" aria-hidden="true"></i>Users</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Categories", "CreateCategory", "EditCategory")" asp-controller="Admin" asp-action="Categories">
+        <i class="bi bi-grid me-1" aria-hidden="true"></i>Categories</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Reviews")" asp-controller="Admin" asp-action="Reviews">
+        <i class="bi bi-star-half me-1" aria-hidden="true"></i>Reviews</a></li>
+</ul>

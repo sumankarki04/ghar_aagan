@@ -1,0 +1,81 @@
+@model List<Booking>
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<h1 class="h2 mb-4">My Bookings</h1>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--ga-muted);"></i>
+        <p class="text-muted mt-3">You haven't booked any services yet.</p>
+        <a class="btn btn-terracotta" asp-controller="Home" asp-action="Index">Browse Services</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Service</th>
+                    <th>Scheduled</th>
+                    <th>Price (est.)</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Providers" asp-action="Details" asp-route-id="@booking.ProviderProfileId">
+                                @booking.ProviderProfile.User.FullName
+                            </a>
+                        </td>
+                        <td>@booking.ProviderProfile.ServiceCategory.Name</td>
+                        <td>@booking.ScheduledDateTime.ToString("dd MMM yyyy, HH:mm")</td>
+                        <td>NPR @booking.Price.ToString("0")</td>
+                        <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@booking.Id"
+                               aria-label="Booking details">Details</a>
+                            @if (booking.Status is not (BookingStatus.Cancelled or BookingStatus.Rejected))
+                            {
+                                <a class="btn btn-sm btn-green" asp-controller="Messages" asp-action="Thread" asp-route-id="@booking.Id"
+                                   aria-label="Message provider">
+                                    <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                                </a>
+                            }
+                            @if (booking.Status is BookingStatus.Pending or BookingStatus.Confirmed)
+                            {
+                                <form asp-action="Cancel" asp-route-id="@booking.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Cancel this booking?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                </form>
+                            }
+                            @if (booking.Status == BookingStatus.Completed && booking.Review is null)
+                            {
+                                <a class="btn btn-sm btn-marigold" asp-action="Review" asp-route-id="@booking.Id">
+                                    <i class="bi bi-star me-1"></i>Leave Review
+                                </a>
+                            }
+                            @if (booking.Review is not null)
+                            {
+                                <span class="ga-stars small" title="Your review">
+                                    @for (int s = 1; s <= booking.Review.Rating; s++)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

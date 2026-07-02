@@ -1,0 +1,64 @@
+@model List<Booking>
+@{
+    ViewData["Title"] = "All Bookings";
+    var currentStatus = (string?)ViewBag.Status;
+    var statuses = Enum.GetNames<BookingStatus>();
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="h5 mb-0">Bookings (@Model.Count)</h2>
+    <div class="d-flex gap-1 flex-wrap" role="group" aria-label="Filter by status">
+        <a class="btn btn-sm @(string.IsNullOrEmpty(currentStatus) ? "btn-green" : "btn-outline-secondary")"
+           asp-action="Bookings">All</a>
+        @foreach (var status in statuses)
+        {
+            <a class="btn btn-sm @(currentStatus == status ? "btn-green" : "btn-outline-secondary")"
+               asp-action="Bookings" asp-route-status="@status">@status</a>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-secondary">No bookings match this filter.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>#</th><th>Customer</th><th>Provider</th><th>Service</th><th>Scheduled</th><th>Price</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td><a asp-action="Booking" asp-route-id="@booking.Id">#@booking.Id</a></td>
+                        <td><a asp-action="User" asp-route-id="@booking.CustomerId">@booking.Customer.FullName</a><br /><span class="small text-muted">@booking.Customer.PhoneNumber</span></td>
+                        <td><a asp-action="User" asp-route-id="@booking.ProviderProfile.UserId">@booking.ProviderProfile.User.FullName</a></td>
+                        <td>@booking.ProviderProfile.ServiceCategory.Name</td>
+                        <td>@booking.ScheduledDateTime.ToString("dd MMM yyyy, HH:mm")</td>
+                        <td>NPR @booking.Price.ToString("0")</td>
+                        <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Booking" asp-route-id="@booking.Id"
+                               aria-label="View booking details"><i class="bi bi-eye" aria-hidden="true"></i></a>
+                            @if (booking.Status is BookingStatus.Pending or BookingStatus.Confirmed or BookingStatus.InProgress)
+                            {
+                                <form asp-action="CancelBooking" asp-route-id="@booking.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Force-cancel booking #@booking.Id? Use for disputes/no-shows.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-x-octagon me-1" aria-hidden="true"></i>Force Cancel
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

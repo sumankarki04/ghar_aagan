@@ -1,0 +1,63 @@
+@model ProviderProfileFormViewModel
+@{
+    ViewData["Title"] = "My Provider Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h3 mb-3">My Provider Profile</h1>
+                <p class="text-muted small">
+                    Complete your profile so households can find and book you.
+                    New profiles are reviewed by an admin for the <strong>Verified</strong> badge.
+                </p>
+
+                <form asp-action="EditProfile" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="ServiceCategoryId" class="form-label"></label>
+                        <select asp-for="ServiceCategoryId" asp-items="ViewBag.Categories" class="form-select">
+                            <option value="">— Select a category —</option>
+                        </select>
+                        <span asp-validation-for="ServiceCategoryId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Bio" class="form-label"></label>
+                        <textarea asp-for="Bio" class="form-control" rows="4"
+                                  placeholder="Describe your skills, specialities and typical jobs."></textarea>
+                        <span asp-validation-for="Bio" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="YearsExperience" class="form-label"></label>
+                            <input asp-for="YearsExperience" class="form-control" type="number" min="0" max="60" />
+                            <span asp-validation-for="YearsExperience" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="HourlyRate" class="form-label"></label>
+                            <input asp-for="HourlyRate" class="form-control" type="number" step="10" min="50" />
+                            <span asp-validation-for="HourlyRate" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Location" class="form-label"></label>
+                        <input asp-for="Location" class="form-control" placeholder="e.g. Kathmandu - Baneshwor" />
+                        <span asp-validation-for="Location" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-terracotta">Save Profile</button>
+                    <a class="btn btn-outline-secondary" asp-action="Dashboard">Back to Dashboard</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

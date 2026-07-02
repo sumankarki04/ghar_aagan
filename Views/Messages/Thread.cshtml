@@ -1,0 +1,83 @@
+@model MessageThreadViewModel
+@{
+    ViewData["Title"] = $"Chat · {Model.OtherPartyName}";
+    var booking = Model.Booking;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Inbox">Messages</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.OtherPartyName</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card ga-chat-card">
+            @* Header: who + booking context *@
+            <div class="card-header d-flex align-items-center gap-3 ga-chat-header">
+                <div class="ga-avatar" aria-hidden="true">@string.Concat(Model.OtherPartyName.Split(' ').Take(2).Select(n => n[0]))</div>
+                <div class="flex-fill min-w-0">
+                    <strong>@Model.OtherPartyName</strong>
+                    <div class="small opacity-75">
+                        @booking.ProviderProfile.ServiceCategory.Name · @booking.ScheduledDateTime.ToString("dd MMM yyyy, HH:mm")
+                        · <span class="badge status-@booking.Status">@booking.Status</span>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.OtherPartyPhone))
+                {
+                    <a class="btn btn-sm btn-outline-cream flex-shrink-0" href="tel:@Model.OtherPartyPhone"
+                       aria-label="Call @Model.OtherPartyName">
+                        <i class="bi bi-telephone me-1" aria-hidden="true"></i>@Model.OtherPartyPhone
+                    </a>
+                }
+            </div>
+
+            @* Message list *@
+            <div class="card-body ga-chat-body" id="chatBody">
+                @if (!Model.Messages.Any())
+                {
+                    <p class="text-center text-muted small my-4">
+                        This is the start of your conversation about this booking. Say namaste! 🙏
+                    </p>
+                }
+                @foreach (var message in Model.Messages)
+                {
+                    var mine = message.SenderId == Model.CurrentUserId;
+                    <div class="ga-bubble-row @(mine ? "mine" : "")">
+                        <div class="ga-bubble @(mine ? "mine" : "")">
+                            <div>@message.Content</div>
+                            <div class="ga-bubble-time">@message.SentAt.ToLocalTime().ToString("dd MMM, HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Composer *@
+            <div class="card-footer bg-transparent">
+                <form asp-action="Send" method="post" class="d-flex gap-2">
+                    <input type="hidden" asp-for="NewMessage.BookingId" name="BookingId" />
+                    <label class="visually-hidden" for="msgContent">Message</label>
+                    <input id="msgContent" name="Content" class="form-control" maxlength="1000" autocomplete="off"
+                           placeholder="Type a message…" required autofocus />
+                    <button type="submit" class="btn btn-terracotta flex-shrink-0" aria-label="Send message">
+                        <i class="bi bi-send-fill" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="text-center mt-3 small text-muted">
+            <i class="bi bi-shield-check me-1" aria-hidden="true"></i>
+            Keep communication on Ghar Aagan so there's a record if anything goes wrong.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Keep the newest message in view.
+        const chatBody = document.getElementById('chatBody');
+        if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+    </script>
+}

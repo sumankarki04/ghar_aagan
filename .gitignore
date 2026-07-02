@@ -1,26 +1,19 @@
-# Build output
+# .NET build output
 bin/
 obj/
-out/
+publish/
 
-# Visual Studio / Rider
-.vs/
-.idea/
-*.user
-*.suo
-
-# SQLite runtime database (regenerated + seeded on run)
+# SQLite database (recreated by migrations + seed on first run)
 *.db
 *.db-shm
 *.db-wal
 
-# Secrets — JWT key & admin password live in user-secrets, never the repo
-secrets.json
+# IDE / tooling
+.vs/
+.vscode/
+.claude/
+*.user
 
-# Logs / OS
-*.log
+# OS
 Thumbs.db
 .DS_Store
-
-# KYC uploaded documents (sensitive, never commit)
-kyc-store/

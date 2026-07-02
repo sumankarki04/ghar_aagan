@@ -1,0 +1,108 @@
+@model ApplicationUser
+@{
+    ViewData["Title"] = Model.FullName;
+    var roles = (string)ViewBag.Roles;
+    bool isSuspended = (bool)ViewBag.IsSuspended;
+    var providerProfile = (ProviderProfile?)ViewBag.ProviderProfile;
+    var bookings = (List<Booking>)ViewBag.Bookings;
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Users">Users</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <div class="ga-avatar lg mx-auto mb-2" aria-hidden="true">
+                    @string.Concat(Model.FullName.Split(' ').Take(2).Select(n => n[0]))
+                </div>
+                <h2 class="h5 mb-1">@Model.FullName</h2>
+                <span class="badge bg-secondary">@roles</span>
+                @if (isSuspended)
+                {
+                    <span class="badge" style="background: var(--ga-danger);">Suspended</span>
+                }
+                <hr />
+                <dl class="row text-start small mb-0">
+                    <dt class="col-4">Email</dt><dd class="col-8">@Model.Email</dd>
+                    <dt class="col-4">Phone</dt><dd class="col-8">@Model.PhoneNumber</dd>
+                    <dt class="col-4">Address</dt><dd class="col-8">@Model.Address</dd>
+                </dl>
+                @if (!roles.Contains("Admin"))
+                {
+                    <form asp-action="ToggleSuspend" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('@(isSuspended ? "Reactivate" : "Suspend") @Model.FullName?');">
+                        <button type="submit" class="btn btn-sm w-100 @(isSuspended ? "btn-green" : "btn-outline-danger")">
+                            <i class="bi @(isSuspended ? "bi-unlock" : "bi-lock") me-1" aria-hidden="true"></i>
+                            @(isSuspended ? "Reactivate Account" : "Suspend Account")
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (providerProfile is not null)
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h6 text-muted">Provider Profile</h3>
+                    <dl class="row small mb-2">
+                        <dt class="col-5">Category</dt><dd class="col-7">@providerProfile.ServiceCategory.Name</dd>
+                        <dt class="col-5">Location</dt><dd class="col-7">@providerProfile.Location</dd>
+                        <dt class="col-5">Rate</dt><dd class="col-7">NPR @providerProfile.HourlyRate.ToString("0")/hr</dd>
+                        <dt class="col-5">Experience</dt><dd class="col-7">@providerProfile.YearsExperience yrs</dd>
+                        <dt class="col-5">Rating</dt><dd class="col-7">@providerProfile.AverageRating.ToString("0.0") ★</dd>
+                        <dt class="col-5">Verified</dt>
+                        <dd class="col-7">@(providerProfile.IsVerified ? "Yes" : "No — pending")</dd>
+                    </dl>
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Providers" asp-action="Details" asp-route-id="@providerProfile.Id">
+                        Public Profile
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="h6 mb-3">Bookings (@bookings.Count)</h3>
+                @if (!bookings.Any())
+                {
+                    <p class="text-muted small mb-0">No bookings.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>#</th><th>Role</th><th>Other Party</th><th>Service</th><th>Scheduled</th><th>Price</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var booking in bookings)
+                                {
+                                    var asCustomer = booking.CustomerId == Model.Id;
+                                    <tr class="ga-row-link" data-href="@Url.Action("Booking", new { id = booking.Id })">
+                                        <td><a asp-action="Booking" asp-route-id="@booking.Id">#@booking.Id</a></td>
+                                        <td><span class="badge bg-secondary">@(asCustomer ? "Customer" : "Provider")</span></td>
+                                        <td>@(asCustomer ? booking.ProviderProfile.User.FullName : booking.Customer.FullName)</td>
+                                        <td>@booking.ProviderProfile.ServiceCategory.Name</td>
+                                        <td>@booking.ScheduledDateTime.ToString("dd MMM yyyy")</td>
+                                        <td>NPR @booking.Price.ToString("0")</td>
+                                        <td><span class="badge status-@booking.Status">@booking.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

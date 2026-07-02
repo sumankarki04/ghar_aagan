@@ -1,0 +1,41 @@
+@model ReviewCreateViewModel
+@{
+    ViewData["Title"] = "Leave a Review";
+}
+
+<div class="ga-auth-card">
+    <div class="card">
+        <div class="card-header"><i class="bi bi-star me-2"></i>Review @Model.ProviderName</div>
+        <div class="card-body">
+            <form asp-action="Review" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+                <input type="hidden" asp-for="BookingId" />
+
+                <div class="mb-3">
+                    <label asp-for="Rating" class="form-label"></label>
+                    <select asp-for="Rating" class="form-select">
+                        <option value="5">★★★★★ — Excellent</option>
+                        <option value="4">★★★★ — Good</option>
+                        <option value="3">★★★ — Okay</option>
+                        <option value="2">★★ — Poor</option>
+                        <option value="1">★ — Very poor</option>
+                    </select>
+                    <span asp-validation-for="Rating" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Comment" class="form-label"></label>
+                    <textarea asp-for="Comment" class="form-control" rows="4"
+                              placeholder="How was the service? Your review helps other households."></textarea>
+                    <span asp-validation-for="Comment" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-terracotta w-100">Submit Review</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

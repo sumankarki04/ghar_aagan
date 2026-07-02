@@ -1,0 +1,83 @@
+@model List<AdminUserRow>
+@{
+    ViewData["Title"] = "Manage Users";
+    var query = (string?)ViewBag.Query;
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="h5 mb-0">Users (@Model.Count)</h2>
+    <form method="get" asp-action="Users" class="d-flex gap-2" role="search" aria-label="Search users">
+        <label class="visually-hidden" for="userSearch">Search users</label>
+        <input id="userSearch" type="text" name="q" value="@query" class="form-control form-control-sm"
+               placeholder="Search name, email, phone…" style="min-width: 16rem;" />
+        <button type="submit" class="btn btn-sm btn-green"><i class="bi bi-search" aria-hidden="true"></i></button>
+        @if (!string.IsNullOrEmpty(query))
+        {
+            <a class="btn btn-sm btn-outline-secondary" asp-action="Users">Clear</a>
+        }
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role(s)</th><th>Bookings</th><th>Status</th><th class="text-end">Actions</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                <tr class="@(row.IsSuspended ? "table-danger" : "")">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="ga-avatar" style="width:2.2rem;height:2.2rem;font-size:.8rem;" aria-hidden="true">
+                                @string.Concat(row.User.FullName.Split(' ').Take(2).Select(n => n[0]))
+                            </div>
+                            <a asp-action="User" asp-route-id="@row.User.Id">@row.User.FullName</a>
+                        </div>
+                    </td>
+                    <td class="small">@row.User.Email</td>
+                    <td class="small">@row.User.PhoneNumber</td>
+                    <td><span class="badge bg-secondary">@row.Roles</span></td>
+                    <td>@row.BookingCount</td>
+                    <td>
+                        @if (row.IsSuspended)
+                        {
+                            <span class="badge" style="background: var(--ga-danger);">Suspended</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-verified">Active</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (!row.Roles.Contains("Admin"))
+                        {
+                            <form asp-action="ToggleSuspend" asp-route-id="@row.User.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('@(row.IsSuspended ? "Reactivate" : "Suspend") @row.User.FullName?');">
+                                @if (row.IsSuspended)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-green">
+                                        <i class="bi bi-unlock me-1" aria-hidden="true"></i>Reactivate
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-lock me-1" aria-hidden="true"></i>Suspend
+                                    </button>
+                                }
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="small text-muted">Protected</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

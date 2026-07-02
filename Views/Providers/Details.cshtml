@@ -1,0 +1,124 @@
+@model ProviderDetailsViewModel
+@{
+    var p = Model.Profile;
+    ViewData["Title"] = p.User.FullName;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Services</a></li>
+        <li class="breadcrumb-item">
+            <a asp-action="Browse" asp-route-categoryId="@p.ServiceCategoryId">@p.ServiceCategory.Name</a>
+        </li>
+        <li class="breadcrumb-item active">@p.User.FullName</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div class="d-flex gap-3">
+                        <div class="ga-avatar lg" aria-hidden="true">@string.Concat(p.User.FullName.Split(' ').Take(2).Select(n => n[0]))</div>
+                        <div>
+                        <h1 class="h3 mb-1">@p.User.FullName</h1>
+                        <div class="mb-2">
+                            @if (p.IsVerified)
+                            {
+                                <span class="badge badge-verified"><i class="bi bi-patch-check-fill me-1"></i>Verified Provider</span>
+                            }
+                            <span class="badge bg-secondary">@p.ServiceCategory.Name</span>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="ga-stars fs-5">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                <i class="bi @(s <= Math.Round(p.AverageRating) ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </div>
+                        <div class="small text-muted">@p.AverageRating.ToString("0.0") / 5 · @Model.Reviews.Count review@(Model.Reviews.Count == 1 ? "" : "s")</div>
+                    </div>
+                </div>
+
+                <hr />
+                <p>@p.Bio</p>
+                <div class="row text-center mt-3">
+                    <div class="col-4">
+                        <div class="fw-bold" style="color: var(--ga-terracotta);">NPR @p.HourlyRate.ToString("0")</div>
+                        <div class="small text-muted">per hour</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold">@p.YearsExperience years</div>
+                        <div class="small text-muted">experience</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold">@p.Location</div>
+                        <div class="small text-muted">service area</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a class="btn btn-terracotta" asp-controller="Bookings" asp-action="Create" asp-route-providerId="@p.Id">
+                        <i class="bi bi-calendar-plus me-1"></i>Book @p.User.FullName.Split(' ')[0]
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <h4>Customer Reviews</h4>
+        @if (!Model.Reviews.Any())
+        {
+            <p class="text-muted">No reviews yet.</p>
+        }
+        else
+        {
+            @foreach (var review in Model.Reviews)
+            {
+                <div class="card mb-2">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>@review.Booking.Customer.FullName</strong>
+                            <span class="ga-stars">
+                                @for (int s = 1; s <= 5; s++)
+                                {
+                                    <i class="bi @(s <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(review.Comment))
+                        {
+                            <p class="mb-1 mt-1">@review.Comment</p>
+                        }
+                        <span class="small text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5><i class="bi bi-clock me-2"></i>Weekly Availability</h5>
+                @if (!Model.Availability.Any())
+                {
+                    <p class="text-muted small mb-0">Availability not set yet — request a booking and the provider will confirm.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var slot in Model.Availability)
+                        {
+                            <li class="list-group-item d-flex justify-content-between bg-transparent px-0">
+                                <span>@slot.Day</span>
+                                <span class="text-muted">@slot.StartTime.ToString("HH:mm") – @slot.EndTime.ToString("HH:mm")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+@model List<ProviderProfile>
+@{
+    ViewData["Title"] = "Manage Providers";
+    var filter = (string)(ViewBag.Filter ?? "all");
+    int pendingCount = (int)(ViewBag.PendingCount ?? 0);
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="h5 mb-0">Providers (@Model.Count)</h2>
+    <div class="btn-group" role="group" aria-label="Filter providers">
+        <a class="btn btn-sm @(filter == "all" ? "btn-green" : "btn-outline-secondary")" asp-action="Providers" asp-route-filter="all">All</a>
+        <a class="btn btn-sm @(filter == "pending" ? "btn-green" : "btn-outline-secondary")" asp-action="Providers" asp-route-filter="pending">
+            Pending @(pendingCount > 0 ? $"({pendingCount})" : "")</a>
+        <a class="btn btn-sm @(filter == "verified" ? "btn-green" : "btn-outline-secondary")" asp-action="Providers" asp-route-filter="verified">Verified</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success"><i class="bi bi-check-circle me-2" aria-hidden="true"></i>Nothing here.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Provider</th><th>Contact</th><th>Category</th><th>Location</th><th>Rate</th><th>Rating</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var profile in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="ga-avatar" style="width:2.2rem;height:2.2rem;font-size:.8rem;" aria-hidden="true">
+                                    @string.Concat(profile.User.FullName.Split(' ').Take(2).Select(n => n[0]))
+                                </div>
+                                <div>
+                                    <a asp-action="User" asp-route-id="@profile.UserId">@profile.User.FullName</a>
+                                    <div class="small text-muted">@profile.YearsExperience yrs exp.</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="small">@profile.User.Email<br />@profile.User.PhoneNumber</td>
+                        <td>@profile.ServiceCategory.Name</td>
+                        <td class="small">@profile.Location</td>
+                        <td>NPR @profile.HourlyRate.ToString("0")</td>
+                        <td><span class="ga-stars small"><i class="bi bi-star-fill" aria-hidden="true"></i></span> @profile.AverageRating.ToString("0.0")</td>
+                        <td>
+                            @if (profile.IsVerified)
+                            {
+                                <span class="badge badge-verified"><i class="bi bi-patch-check-fill me-1" aria-hidden="true"></i>Verified</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Providers" asp-action="Details" asp-route-id="@profile.Id"
+                               aria-label="View public profile"><i class="bi bi-eye" aria-hidden="true"></i></a>
+                            <form asp-action="ToggleVerify" asp-route-id="@profile.Id" method="post" class="d-inline">
+                                @if (profile.IsVerified)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Revoke verification for @profile.User.FullName?');">
+                                        <i class="bi bi-shield-x me-1" aria-hidden="true"></i>Revoke
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-green">
+                                        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>Approve
+                                    </button>
+                                }
+                            </form>
+                            @if (!profile.IsVerified)
+                            {
+                                <form asp-action="Reject" asp-route-id="@profile.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Reject and remove this provider profile?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

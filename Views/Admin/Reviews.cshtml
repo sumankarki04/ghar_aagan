@@ -1,0 +1,52 @@
+@model List<Review>
+@{
+    ViewData["Title"] = "Review Moderation";
+}
+
+<h1 class="h2 mb-3">Admin Panel</h1>
+<partial name="_AdminNav" />
+
+<h2 class="h5 mb-1">Review Moderation (@Model.Count)</h2>
+<p class="section-sub">Remove fake or abusive reviews — provider ratings recalculate automatically.</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-secondary">No reviews yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Rating</th><th>Comment</th><th>Customer</th><th>Provider</th><th>Date</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var review in Model)
+                {
+                    <tr>
+                        <td class="text-nowrap">
+                            <span class="ga-stars" aria-label="@review.Rating out of 5">
+                                @for (int s = 1; s <= review.Rating; s++)
+                                {
+                                    <i class="bi bi-star-fill" aria-hidden="true"></i>
+                                }
+                            </span>
+                        </td>
+                        <td class="small" style="max-width: 22rem;">@review.Comment</td>
+                        <td>@review.Booking.Customer.FullName</td>
+                        <td>@review.Booking.ProviderProfile.User.FullName</td>
+                        <td class="small text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            <form asp-action="DeleteReview" asp-route-id="@review.Id" method="post"
+                                  onsubmit="return confirm('Delete this review? The provider rating will be recalculated.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash me-1" aria-hidden="true"></i>Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

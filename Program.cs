@@ -1,104 +1,73 @@
-using System.Text;
 using GharAagan.Data;
+using GharAagan.Models;
 using GharAagan.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Database (SQLite) ---
-var connectionString = builder.Configuration.GetConnectionString("Default")
+// ---------------------------------------------------------------------------
+// Database — SQLite by default (zero-setup, portable).
+// To switch to SQL Server later, this is the ONE line to change:
+//     options.UseSqlServer(connectionString)
+// plus the "DefaultConnection" string in appsettings.json.
+// ---------------------------------------------------------------------------
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=gharaagan.db";
-builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
 
-// --- JWT ---
-var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
-// The signing key is a secret: keep it out of source. Provide it via user-secrets
-// (dev) or the Jwt__Key environment variable (prod). Fail fast if it's missing/weak.
-if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
-    throw new InvalidOperationException(
-        "Jwt:Key is missing or too short (need >= 32 chars). " +
-        "Set it with: dotnet user-secrets set \"Jwt:Key\" \"<random-key>\", " +
-        "or the Jwt__Key environment variable.");
-builder.Services.AddSingleton(jwt);
-builder.Services.AddScoped<TokenService>();
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// ---------------------------------------------------------------------------
+// Identity with roles (Customer / Provider / Admin).
+// Relaxed password rules for a demo/research project; tighten in production.
+// ---------------------------------------------------------------------------
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt.Issuer,
-            ValidAudience = jwt.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key))
-        };
-    });
-builder.Services.AddAuthorization();
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-// --- Swagger with JWT bearer support ---
-builder.Services.AddSwaggerGen(c =>
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ghar Aagan API", Version = "v1" });
-    var scheme = new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter the JWT token (without the 'Bearer ' prefix).",
-        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-    };
-    c.AddSecurityDefinition("Bearer", scheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement { [scheme] = Array.Empty<string>() });
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
 });
 
-// The built-in frontend is served same-origin, so CORS is only needed for separate
-// dev clients. Restrict to configured origins (Cors:Origins) with localhost defaults
-// instead of allowing every origin.
-var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-    ?? new[]
-    {
-        "http://localhost:5049", "https://localhost:7050",
-        "http://localhost:5173", "http://localhost:3000"
-    };
-builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()));
+// Application services
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Apply migrations + seed on startup.
+// Seed database (roles, admin, categories, sample providers + reviews).
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db, app.Configuration);
+    await SeedData.InitializeAsync(scope.ServiceProvider);
 }
 
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
-// Serve the HTML/CSS/JS frontend from wwwroot (index.html at site root).
-app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.UseCors();
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
